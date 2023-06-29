@@ -24,6 +24,15 @@ class TemplateDetector(DetectorBase):
         self.__threshold = value
 
     @property
+    def pattern(self):
+        return self.__pattern
+
+    @pattern.setter
+    def pattern(self, pat):
+        self.__pattern = pat
+        self.__height, self.__width = self.__pattern.shape[:2]
+
+    @property
     def max_num(self):
         return self.__max_num
 
@@ -31,8 +40,10 @@ class TemplateDetector(DetectorBase):
     def max_num(self, value):
         self.__max_num = value
 
-    def after_load(self, file : str):
-        pass
+    def load(self, file):
+        self.__pattern = cv2.imread(file)
+        self.__height, self.__width = self.__pattern.shape[:2]
+
 
     def search(self, image : np.array, threshold : float = None):
         if image is None:
@@ -77,6 +88,13 @@ class TemplateDetector(DetectorBase):
                 w1 = np.clip(max_loc[0] - self.__width//2, 0, img_width)
                 w2 = np.clip(max_loc[0] + self.__width//2 + 1, 0, img_width)
                 res[h1:h2, w1:w2] = 0   
-                rects.append((int(x + self.__width/2), int(y + self.__height/2), self.__width, self.__height, max_val, 0))
+
+                # note: The size of the match image is smaller by the size of the pattern.
+                # therefor pattern size/2 needs to be added.
+                rects.append((int(x + self.__width//2), int(y + self.__height//2), self.__width, self.__height, max_val, 0))
+
+        if len(rects)==0:
+            cv2.imshow("Correlation - Error", res)
+            cv2.waitKey()
 
         return np.array(rects)

@@ -70,3 +70,107 @@ def read_images_folder(path : pathlib.Path):
             raise Exception("read_images_folder: inconsistent image sizes")
 
     return np.array(images)
+
+
+def create_radial_mask(h, w, inner_radius_fraction=0.4, outer_radius_fraction=1.0):
+    center = (int(w / 2), int(h / 2))
+    inner_radius = int(min(center[0], center[1]) * inner_radius_fraction)
+    outer_radius = int(min(center[0], center[1]) * outer_radius_fraction)
+
+    Y, X = np.ogrid[:h, :w]
+    dist_from_center = np.sqrt((X - center[0]) ** 2 + (Y - center[1]) ** 2)
+
+    mask = np.zeros((h, w))
+    mask[dist_from_center <= inner_radius] = 1.0
+    mask[dist_from_center >= outer_radius] = 0.0
+
+    transition = np.logical_and(dist_from_center > inner_radius, dist_from_center < outer_radius)
+    mask[transition] = (outer_radius - dist_from_center[transition]) / (outer_radius - inner_radius)
+
+    return mask
+
+def overlay_images(background, foreground, position, relative_to='corner', opacity=1):
+    # Get the dimensions of the foreground image
+    fh, fw, _ = foreground.shape
+
+    # Create an alpha mask of the same size as the foreground image
+    mask = create_radial_mask(fh, fw, 0.4, 1 + opacity)
+
+    # Convert foreground to float and normalize
+    foreground = foreground.astype(float) / 255
+
+    # Create a 4-channel image (RGB + alpha) for the foreground
+    foreground_alpha = np.dstack([foreground, mask])
+
+    # Get the position
+    x, y = position
+
+    # If position is relative to the center, adjust the position
+    if relative_to == 'center':
+        y = background.shape[0]//2 - fh//2 + y
+        x = background.shape[1]//2 - fw//2 + x
+
+    # Calculate the overlay region
+    overlay_x_start = max(x, 0)
+    overlay_y_start = max(y, 0)
+    overlay_x_end = min(x+fw, background.shape[1])
+    overlay_y_end = min(y+fh, background.shape[0])
+
+    # Calculate the region of the foreground to be overlayed
+    foreground_x_start = max(0, -x)
+    foreground_y_start = max(0, -y)
+    foreground_x_end = min(fw, overlay_x_end - x)
+    foreground_y_end = min(fh, overlay_y_end - y)
+
+    # Prepare the overlay with the correct opacity
+    foreground_region = foreground_alpha[foreground_y_start:foreground_y_end, foreground_x_start:foreground_x_end]
+    background_region = background[overlay_y_start:overlay_y_end, overlay_x_start:overlay_x_end] / 255
+
+    overlay = (foreground_region[..., :3] * foreground_region[..., 3:4] * opacity +
+               background_region * (1 - foreground_region[..., 3:4] * opacity)) * 255
+
+    # Overlay the appropriately sized and positioned region of the foreground onto the background
+    background[overlay_y_start:overlay_y_end, overlay_x_start:overlay_x_end] = overlay.astype(np.uint8)
+
+    return background
+
+
+def overlay_imagesxxx(background, foreground, position, relative_to='corner', opacity=1):
+    # Get the dimensions of the foreground image
+    fh, fw, _ = foreground.shape
+
+    # Get the position
+    x, y = position
+
+    # If position is relative to the center, adjust the position
+    if relative_to == 'center':
+        y = background.shape[0]//2 - fh//2 + y
+        x = background.shape[1]//2 - fw//2 + x
+
+    # Calculate the overlay region
+    overlay_x_start = max(x, 0)
+    overlay_y_start = max(y, 0)
+    overlay_x_end = min(x+fw, background.shape[1])
+    overlay_y_end = min(y+fh, background.shape[0])
+
+    # Calculate the region of the foreground to be overlayed
+    foreground_x_start = max(0, -x)
+    foreground_y_start = max(0, -y)
+    foreground_x_end = min(fw, overlay_x_end - x)
+    foreground_y_end = min(fh, overlay_y_end - y)
+
+    # Prepare the overlay with the correct opacity
+    overlay = cv2.addWeighted(
+        background[overlay_y_start:overlay_y_end, overlay_x_start:overlay_x_end],
+        1 - opacity,
+        foreground[foreground_y_start:foreground_y_end, foreground_x_start:foreground_x_end],
+        opacity,
+        0
+    )
+
+    # Overlay the appropriate region of the foreground onto the background
+    background[overlay_y_start:overlay_y_end, overlay_x_start:overlay_x_end] = overlay
+
+    return background
+
+
