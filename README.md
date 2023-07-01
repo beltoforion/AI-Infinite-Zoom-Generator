@@ -1,4 +1,4 @@
-# AI Outpainting Zoom Animations
+# Generating Zoom Animations from AI Outpainting
 This python program can turn a bunch of AI generated images into a zoom animation. Currently it is expecting Midjourney images as input that were
 created using the 2x zoom option. 
 
