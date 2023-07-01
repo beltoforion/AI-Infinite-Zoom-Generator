@@ -13,6 +13,15 @@ class InfiniZoomParameter:
         self.__reverse = False
         self.__auto_sort = False
         self.__zoom_image_crop = 0.8
+        self.zoom_factor = 2
+
+    @property
+    def zoom_factor(self):
+        return self.__zoom_factor
+    
+    @zoom_factor.setter
+    def zoom_factor(self, f: float):
+        self.__zoom_factor = f
 
     @property
     def zoom_image_crop(self):
@@ -92,6 +101,9 @@ class InfiniZoom:
                 if img1.shape != img2.shape:
                     raise Exception("Auto sort failed: Inconsistent image sizes!")
 
+                # crop the image. On the edges midjourney outpainting is taking some 
+                # liberties that make the images slightly different in order to take 
+                # new prompt requirements into account.
                 h, w = img1.shape[:2]
                 w = int(w * self.__param.zoom_image_crop)
                 h = int(h * self.__param.zoom_image_crop)
@@ -133,7 +145,9 @@ class InfiniZoom:
         cx = w // 2
         cy = h // 2
 
-        step_size_log = math.exp(math.log(2)/steps)
+        # compute step size for each partial image zoom. Zooming is an exponential
+        # process, so we need to compute the steps on a logarithmic scale.
+        step_size_log = math.exp(math.log(self.__param.zoom_factor)/steps)
 
         zf = 1
         img_curr = imgCurr.copy()
