@@ -22,8 +22,11 @@ to order the images in the folder by giving them sequential names (i.e. "frame_0
 Alternatively you can use the "-as" option to let the script find out the image order for you but this will take some time as
 each image is matched against all other images to figure out their relations automatically.
 
-* Create a set of outpainted images with the generative AI of your choice. The first image is the innermost image of the series.
-* The Image series must be zoomed with respect to the center
-* The entire image series must use the same zoom factor (i.e. 2x)
+* Create a set of outpainted images with the generative AI of your choice.
+  + The first image is the innermost image of the series.
+  + The Image series must be zoomed with respect to the center
+  + The entire image series must use the same zoom factor (i.e. 2x)
+* Rename and order the image sequence by giving them sequential names. (i.e. "frame_01.png", "frame_02.png")
+
 
 
