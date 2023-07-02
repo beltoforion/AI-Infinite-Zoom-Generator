@@ -276,9 +276,11 @@ class InfiniZoom:
                 ma_x = int(cx - bx)
                 ma_y = int(cy - by)
                 print(f'image misalignment: x={ma_x:.2f}; y={ma_y:.2f}')
+                
+                # Plausibility check. If the misalignment is too large something is wrong. Usually
+                # the images are not in sequence.
                 if math.sqrt(ma_x*ma_x + ma_y*ma_y) > 40:
                     raise Exception('Images are not properly aligned! Did you sort them correctly?')
-
 
                 # How much do we need to compensate for each step?
                 ma_comp_x = ma_x / steps

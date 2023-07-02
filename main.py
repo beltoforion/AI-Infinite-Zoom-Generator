@@ -11,18 +11,20 @@ def main():
     parser.add_argument('-zs', '--ZoomSteps', dest='zoom_steps', help='The number of zoom steps to be generated between two successive images.', required=False, type=int, default=100)
     parser.add_argument('-zc', '--ZoomCrop', dest='zoom_crop', help='Set the crop factor of each zoom steps followup image. This is helpfull to hide image varyations on the edges.', required=False, type=float, default=0.8)
     parser.add_argument('-o', '--Output', dest='output', help='Name of output file including mp4 extension.', required=False, type=str, default='output.mp4')
+    parser.add_argument('-i', '--Input', dest='input_folder', help='Path to to folder containing input images.', required=True, type=str)
     parser.add_argument('-as', '--AutoSort', dest='auto_sort', help='Input images are unsorted, automatically sort them.', required=False, action='store_true', default=False)
     parser.add_argument('-rev', '--Reverse', dest='reverse', help='Reverse the output video.', required=False, action='store_true', default=False)
     
     args = parser.parse_args()
 
     print('\r\n')
-    print('AI Outpainting Zoom Generator')
-    print('----------------------------------')
+    print('AI Outpainting Zoom Video Generator')
+    print('-----------------------------------')
+    print(f' - input folder: "{args.input_folder}"')
+    print(f' - output file: "{args.output}"')
     print(f' - zoom factor: {args.zoom_factor}')
     print(f' - zoom steps: {args.zoom_steps}')
     print(f' - zoom crop: {args.zoom_crop}')
-    print(f' - output file: "{args.output}"')
     print(f' - auto sort: {args.auto_sort}')
     print(f' - reverse: {args.reverse}')
 
