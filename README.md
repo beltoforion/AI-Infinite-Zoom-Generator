@@ -1,8 +1,7 @@
 # Generating Zoom Animations from AI Outpainting
-This python program can turn a bunch of AI generated images into a zoom animation. Currently it is expecting Midjourney images as input that were
-created using the 2x zoom option. 
-
-Please note: This is project a work in progress!
+This python program can turn a series of AI generated images into a zoom animation. It is taking an image sequence as input that was created
+with a generative AI using a constant zoom factor. You have probably already seen outpainted ai zoom sequences as their base images are now 
+quite easy to create since [Midjourney introduces the zoom out feature](https://docs.midjourney.com/docs/zoom-out) in Version 5.
 
 https://github.com/beltoforion/ai_ever_zoom/assets/2202567/78bcbe99-8dbb-48d7-88bf-f8f400ed10c9
 
