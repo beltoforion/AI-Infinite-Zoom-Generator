@@ -11,12 +11,15 @@ Before you can use this script you have to create a set outpainted ai images. Ou
 create an image with a generative AI and then you zoom this image out by a given zoom factor and let the AI fill
 the newly created empty border. By also changing the prompt you can create scene transitions whilst zooming out.
 
+![outpainting_example](https://github.com/beltoforion/ai_ever_zoom/assets/2202567/206d4f06-6a9b-4b9b-8377-131a319d2457)
+
 AI outpainting requires the use of a generative AI for images and can be done with Midjourney, by Dall-E or with 
 Photoshop (generative AI currently only in the beta version). I only ever tested this command line script on midjourney 
 images since they are easiest to create. In principle this program will work with any outpainted image set.
 
 ## Preparing the images
-* Create a set of outpainted images with the generative AI of your choice.
+* Create a set of outpainted images with the generative AI of your choice. The first image is the innermost image of the series.
 * The Image series must be zoomed with respect to the center
 * The entire image series must use the same zoom factor (i.e. 2x)
+
 
