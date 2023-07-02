@@ -81,12 +81,15 @@ class InfiniZoom:
         self.__image_list = []
         self.__video_writer = None
 
+
     def __load_images(self):
         if not self.__param.input_path.exists():
             raise Exception("input path does not exist")
         
-        print(f'Reading images form "{str(self.__param.input_path)}"')
+        print(f'\nReading images from "{str(self.__param.input_path)}"')
         self.__image_list = ih.read_images_folder(self.__param.input_path)
+        print(f' - {len(self.__image_list)} images read\n')
+
 
     def __print_matrix(self, matrix):
         rows, cols = matrix.shape
@@ -97,9 +100,9 @@ class InfiniZoom:
                 else:
                     print(f'{matrix[i, j]:.2f}', end=" ")  # Print element followed by a tab
 
-            print()  # Move to the next line after printing each row
+            print()
 
-    def __merge_images_horizontally(self,image1, image2, image3, scale=0.5):
+    def __merge_images_horizontally(self,image1, image2, image3, scale=0.2):
         # Check if the input images have the same size
         if image1.shape != image2.shape or image1.shape != image3.shape:
             raise ValueError("Input images must have the same size.")
@@ -121,32 +124,12 @@ class InfiniZoom:
 
         return merged_image
 
-    def __pad_image(self, image, new_width, new_height):
-        # Get the current dimensions of the image
-        height, width = image.shape[:2]
-
-        # Calculate the padding values
-        pad_width = max(0, new_width - width)
-        pad_height = max(0, new_height - height)
-
-        # Create a new blank image with the new dimensions
-        padded_image = np.zeros((new_height, new_width, image.shape[2]), dtype=np.uint8)
-
-        # Calculate the padding for the top, bottom, left, and right sides
-        top = pad_height // 2
-        bottom = pad_height - top
-        left = pad_width // 2
-        right = pad_width - left
-
-        # Copy the original image to the center of the padded image
-        padded_image[top:top+height, left:left+width] = image
-
-        return padded_image
-
     def __auto_sort(self):
-        print(f'Figuring out image order.')
+        print(f'Determining image order')
 
         detector = TemplateDetector(threshold=0.01, max_num=1)
+
+        print(f' - matching images')
 
         num = len(self.__image_list)
         scores = np.zeros((num, num))
@@ -176,7 +159,7 @@ class InfiniZoom:
 
                 img22 = cv2.copyMakeBorder(img2, 0, h-img2.shape[0], 0, w-img2.shape[1], cv2.BORDER_CONSTANT, value=[0,0,0])
 
-                merge = self.__merge_images_horizontally(self.__image_list[i], img22, img22)
+#                merge = self.__merge_images_horizontally(self.__image_list[i], img22, img22)
 #                cv2.imshow("Image", merge)
 #                cv2.waitKey()
 
@@ -186,19 +169,86 @@ class InfiniZoom:
                 else:                    
                     bx, by, bw, bh, score = result[0, :5]
 
-                # if the score is higher than all previous scores update the score matrix
-#                if score>np.max(scores[i, :]):
-#                    scores[i, :] = 0
-#                    scores[i, j] = score
-
                 scores[i, j] = score
                 print(f'.', end='')
-#                print(f'Correlating image {i} with image {j}: {bx}, {by}, {bw}, {bh}, {score:.2f}')
-        
+
+        # process the data to find the best matches for each image        
+        self.__image_list = self.__filter_array(scores)
 
 
-        self.__print_matrix(scores)
-        exit(0)
+    def __filter_array(self, arr):
+        filtered = np.zeros(arr.shape)
+
+        # Get the indices of the row and column maxima
+        row_max_indices = np.argmax(arr, axis=1)
+        col_max_indices = np.argmax(arr, axis=0)
+
+        # We need to find the first image of the series now. To do this we must check the
+        # images that could not be matched as a follow up image to any of the images.
+        # This could be images that were added accidentally but the first image is also unlinked!
+        unlinked_images = []
+        for r in range(arr.shape[0]):
+            # index of the maximum value of row r
+            col_max = row_max_indices[r]
+
+            # is this also the column maximum?
+            if col_max_indices[col_max]==r:
+                filtered[r, col_max] = arr[r, col_max]
+            else:
+                unlinked_images.append(r)
+
+        # Print the image connection matrix
+        print(f'\n\nImage relation matrix:')
+        self.__print_matrix(filtered)
+
+        # Now eliminate all unlinked images and find the first one:
+        num_unlinked = len(unlinked_images)
+        print(f' - found {num_unlinked} unlinked images.')
+        if num_unlinked>1:
+            print(f' - Warning: Your series contains {num_unlinked-1} images that cannot be matched!')
+
+        print('\nFinding first image:')
+        start_candidates = []
+        for i in range(0, len(unlinked_images)):
+            idx = unlinked_images[i]
+            col = filtered[:, idx]
+            if np.any(col != 0):
+                print(f' - Image {idx} is the start of a zoom series')
+                start_candidates.append(idx)
+            else:
+                print(f' - Discarding image {idx} because it is unconnected to other images!')
+
+        if len(start_candidates)==0:
+            raise("Aborting: Could not find start image!")
+
+        if len(start_candidates)>1:
+            raise(f'Aborting: Clean up image series! Found {len(start_candidates)} different images that could be the starting image!')
+
+        # finally build sorted image list
+        sequence_order = self.__assemble_image_sequence(idx, filtered)
+
+        sorted_image_list = []
+        for idx in sequence_order:
+            sorted_image_list.append(self.__image_list[idx])
+            
+        return sorted_image_list
+
+
+    def __assemble_image_sequence(self, start : int, conn_matrix):
+        series = []
+
+        next_image_index = start
+        series.insert(0, next_image_index)
+
+        non_zeros = np.nonzero(conn_matrix[:, next_image_index])[0]
+        while len(non_zeros)>0:
+            next_image_index = non_zeros[0]
+            series.insert(0, next_image_index)
+
+            non_zeros = np.nonzero(conn_matrix[:, next_image_index])[0]            
+
+        return series
+    
 
     def process(self):
         self.__load_images()
@@ -280,6 +330,12 @@ class InfiniZoom:
                 # Plausibility check. If the misalignment is too large something is wrong. Usually
                 # the images are not in sequence.
                 if math.sqrt(ma_x*ma_x + ma_y*ma_y) > 40:
+                    img_small = cv2.copyMakeBorder(img_next, 0, h - hh, 0, w - ww, cv2.BORDER_CONSTANT, value=[0,0,0])
+                    image_debug = self.__merge_images_horizontally(img_curr, img_small, img_small)
+
+#                    cv2.imshow("Image", image_debug)
+#                    cv2.waitKey()
+
                     raise Exception('Images are not properly aligned! Did you sort them correctly?')
 
                 # How much do we need to compensate for each step?
@@ -304,12 +360,6 @@ class InfiniZoom:
             oy = ma_comp_y * i
             mtx_shift = np.float32([[1, 0, ox], [0, 1, oy]])
             img_curr = cv2.warpAffine(img_curr, mtx_shift, (img_curr.shape[1], img_curr.shape[0]))
-
-#            cv2.imshow("Image", img_curr)
-#                cv2.waitKey()
-
-#                cv2.imshow("Image", img_next)
-#                cv2.waitKey()
 
 #            cv2.rectangle(img_curr, (int(bx-bw//2), int(by-bh//2)), (int(bx+bw//2), int(by+bh//2)), (0,0,255), 1)
 

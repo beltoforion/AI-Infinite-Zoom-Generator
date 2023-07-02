@@ -15,8 +15,13 @@
                 "-zf", "2", 
                 "-zs", "100", 
                 "-zc", "0.8",
-                "-i", "./pirate"
-//                "-as", 
+//                "-i", "input/sample_1.5x",
+                "-i", "./input/nostradamus",
+//                "-i", "./input/pirate",
+//                "-i", "./input/pirate_unsorted",
+//                "-i", "./input/sample_ps",
+//                "-i", "./input/street",
+                "-as", 
                 "-o", "myoutput.mp4"]
         }
     ]

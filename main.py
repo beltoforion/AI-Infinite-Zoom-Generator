@@ -29,9 +29,6 @@ def main():
     print(f' - reverse: {args.reverse}')
 
     current_dir = os.path.dirname(os.path.abspath(__file__))
-    #folder_path = os.path.join(current_dir, 'input/pirate_unsorted')
-    folder_path = os.path.join(current_dir, 'input/pirate')
-    #folder_path = os.path.join(current_dir, 'input/street')
 
     param = izoom.InfiniZoomParameter()
     param.reverse = False
@@ -39,7 +36,7 @@ def main():
     param.zoom_image_crop = args.zoom_crop
     param.zoom_steps = args.zoom_steps
     param.zoom_factor = args.zoom_factor  # The zoom factor used by midjourney
-    param.input_path = Path(folder_path)
+    param.input_path = Path(args.input_folder)
     param.output_file = args.output       # name of the output video file
 
     iz = izoom.InfiniZoom(param)
