@@ -7,7 +7,7 @@ from typing import Union
 from processor.processor_base import *
 
 
-def crop_image(image, new_size):
+def crop_image(image, crop_size):
     """ Crop an image. 
      
         Crop is done centric.  
@@ -16,10 +16,12 @@ def crop_image(image, new_size):
     cx = w //2 
     cy = h //2
     
-    start_x = cx - new_size[0]//2
-    start_y = cy - new_size[1]//2
-    end_x = start_x + new_size[0]
-    end_y = start_y + new_size[1]
+    start_x = cx - crop_size[0]//2
+    start_y = cy - crop_size[1]//2
+    
+    end_x = start_x + crop_size[0]
+    end_y = start_y + crop_size[1]
+    
     cropped_image = image[start_y:end_y, start_x:end_x]
     
     return cropped_image

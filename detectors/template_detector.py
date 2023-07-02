@@ -93,8 +93,4 @@ class TemplateDetector(DetectorBase):
                 # therefor pattern size/2 needs to be added.
                 rects.append((int(x + self.__width//2), int(y + self.__height//2), self.__width, self.__height, max_val, 0))
 
-        if len(rects)==0:
-            cv2.imshow("Correlation - Error", res)
-            cv2.waitKey()
-
-        return np.array(rects)
+        return np.array(rects), res

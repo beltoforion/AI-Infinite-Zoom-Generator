@@ -88,29 +88,117 @@ class InfiniZoom:
         print(f'Reading images form "{str(self.__param.input_path)}"')
         self.__image_list = ih.read_images_folder(self.__param.input_path)
 
+    def __print_matrix(self, matrix):
+        rows, cols = matrix.shape
+        for i in range(rows):
+            for j in range(cols):
+                if matrix[i, j]==0:
+                    print(' -- ', end=" ")  # Print element followed by a tab    
+                else:
+                    print(f'{matrix[i, j]:.2f}', end=" ")  # Print element followed by a tab
+
+            print()  # Move to the next line after printing each row
+
+    def __merge_images_horizontally(self,image1, image2, image3, scale=0.5):
+        # Check if the input images have the same size
+        if image1.shape != image2.shape or image1.shape != image3.shape:
+            raise ValueError("Input images must have the same size.")
+
+        # Downscale the images
+        scaled_image1 = cv2.resize(image1, None, fx=scale, fy=scale)
+        scaled_image2 = cv2.resize(image2, None, fx=scale, fy=scale)
+        scaled_image3 = cv2.resize(image3, None, fx=scale, fy=scale)
+
+        # Create a new blank image with triple width
+        merged_width = int(scaled_image1.shape[1] + scaled_image2.shape[1] + scaled_image3.shape[1])
+        merged_height = min(scaled_image1.shape[0], scaled_image2.shape[0], scaled_image3.shape[0])
+        merged_image = np.zeros((merged_height, merged_width, 3), dtype=np.uint8)
+
+        # Stack the images horizontally
+        merged_image[:, :scaled_image1.shape[1]] = scaled_image1
+        merged_image[:, scaled_image1.shape[1]:scaled_image1.shape[1]+scaled_image2.shape[1]] = scaled_image2
+        merged_image[:, scaled_image1.shape[1]+scaled_image2.shape[1]:] = scaled_image3
+
+        return merged_image
+
+    def __pad_image(self, image, new_width, new_height):
+        # Get the current dimensions of the image
+        height, width = image.shape[:2]
+
+        # Calculate the padding values
+        pad_width = max(0, new_width - width)
+        pad_height = max(0, new_height - height)
+
+        # Create a new blank image with the new dimensions
+        padded_image = np.zeros((new_height, new_width, image.shape[2]), dtype=np.uint8)
+
+        # Calculate the padding for the top, bottom, left, and right sides
+        top = pad_height // 2
+        bottom = pad_height - top
+        left = pad_width // 2
+        right = pad_width - left
+
+        # Copy the original image to the center of the padded image
+        padded_image[top:top+height, left:left+width] = image
+
+        return padded_image
+
     def __auto_sort(self):
         print(f'Figuring out image order.')
 
-        for i in range(0, len(self.__image_list)):
-            for j in range(0, len(self.__image_list)):
-                if i>=j:
+        detector = TemplateDetector(threshold=0.01, max_num=1)
+
+        num = len(self.__image_list)
+        scores = np.zeros((num, num))
+        for i in range(0, num):
+            for j in range(0, num):
+                if i==j:
                     continue
                 
                 img1 = self.__image_list[i].copy()
                 img2 = self.__image_list[j].copy()
                 if img1.shape != img2.shape:
                     raise Exception("Auto sort failed: Inconsistent image sizes!")
-
-                # crop the image. On the edges midjourney outpainting is taking some 
-                # liberties that make the images slightly different in order to take 
-                # new prompt requirements into account.
+                
                 h, w = img1.shape[:2]
-                w = int(w * self.__param.zoom_image_crop)
-                h = int(h * self.__param.zoom_image_crop)
-                img2 = ih.crop_image(img2, (w, h))
 
-                print(f'Correlating image {i} with image {j}.')
+                mtx_scale = cv2.getRotationMatrix2D((0, 0), 0, 1/self.__param.zoom_factor)
+                img2 = cv2.warpAffine(img2, mtx_scale, (int(w*1/self.__param.zoom_factor), int(h*1/self.__param.zoom_factor)))
 
+#                cv2.imshow("Image", img2)
+#                cv2.waitKey()
+
+                detector.pattern = img2
+                result, result_img = detector.search(img1)
+
+#                result_img = cv2.cvtColor(result_img, cv2.COLOR_GRAY2BGR)
+#                result_img = self.__pad_image(result_img, w, h)
+
+                img22 = cv2.copyMakeBorder(img2, 0, h-img2.shape[0], 0, w-img2.shape[1], cv2.BORDER_CONSTANT, value=[0,0,0])
+
+                merge = self.__merge_images_horizontally(self.__image_list[i], img22, img22)
+#                cv2.imshow("Image", merge)
+#                cv2.waitKey()
+
+                if len(result)==0:
+                    print(f'Correlating image {i} with image {j}: images are uncorrelated.')
+                    continue
+                else:                    
+                    bx, by, bw, bh, score = result[0, :5]
+
+                # if the score is higher than all previous scores update the score matrix
+#                if score>np.max(scores[i, :]):
+#                    scores[i, :] = 0
+#                    scores[i, j] = score
+
+                scores[i, j] = score
+                print(f'.', end='')
+#                print(f'Correlating image {i} with image {j}: {bx}, {by}, {bw}, {bh}, {score:.2f}')
+        
+
+
+        self.__print_matrix(scores)
+        exit(0)
 
     def process(self):
         self.__load_images()
@@ -176,7 +264,7 @@ class InfiniZoom:
                 # image offset to compensate
                 detector = TemplateDetector(threshold=0.3, max_num=1)
                 detector.pattern = img_next
-                result = detector.search(img_curr)
+                result, result_image = detector.search(img_curr)
                 if len(result)==0:
                     raise Exception("Cannot match image to precursor!")
 
@@ -188,7 +276,10 @@ class InfiniZoom:
                 ma_x = int(cx - bx)
                 ma_y = int(cy - by)
                 print(f'image misalignment: x={ma_x:.2f}; y={ma_y:.2f}')
-                
+                if math.sqrt(ma_x*ma_x + ma_y*ma_y) > 40:
+                    raise Exception('Images are not properly aligned! Did you sort them correctly?')
+
+
                 # How much do we need to compensate for each step?
                 ma_comp_x = ma_x / steps
                 ma_comp_y = ma_y / steps
