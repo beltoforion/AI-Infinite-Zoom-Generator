@@ -102,7 +102,7 @@ class InfiniZoom:
 
             print()
 
-    def __merge_images_horizontally(self,image1, image2, image3, scale=0.2):
+    def __merge_images_horizontally(self,image1, image2, image3, scale=0.5):
         # Check if the input images have the same size
         if image1.shape != image2.shape or image1.shape != image3.shape:
             raise ValueError("Input images must have the same size.")
@@ -148,17 +148,10 @@ class InfiniZoom:
                 mtx_scale = cv2.getRotationMatrix2D((0, 0), 0, 1/self.__param.zoom_factor)
                 img2 = cv2.warpAffine(img2, mtx_scale, (int(w*1/self.__param.zoom_factor), int(h*1/self.__param.zoom_factor)))
 
-#                cv2.imshow("Image", img2)
-#                cv2.waitKey()
-
                 detector.pattern = img2
                 result, result_img = detector.search(img1)
 
-#                result_img = cv2.cvtColor(result_img, cv2.COLOR_GRAY2BGR)
-#                result_img = self.__pad_image(result_img, w, h)
-
-                img22 = cv2.copyMakeBorder(img2, 0, h-img2.shape[0], 0, w-img2.shape[1], cv2.BORDER_CONSTANT, value=[0,0,0])
-
+#                img22 = cv2.copyMakeBorder(img2, 0, h-img2.shape[0], 0, w-img2.shape[1], cv2.BORDER_CONSTANT, value=[0,0,0])
 #                merge = self.__merge_images_horizontally(self.__image_list[i], img22, img22)
 #                cv2.imshow("Image", merge)
 #                cv2.waitKey()
@@ -226,6 +219,7 @@ class InfiniZoom:
 
         # finally build sorted image list
         sequence_order = self.__assemble_image_sequence(idx, filtered)
+        print(f' - Image sequence is {",".join(map(str, sequence_order))}')
 
         sorted_image_list = []
         for idx in sequence_order:
@@ -265,6 +259,7 @@ class InfiniZoom:
         video_h = int(h * self.__param.zoom_image_crop)
         self.__video_writer = cv2.VideoWriter(self.__param.output_file, cv2.VideoWriter_fourcc(*'mp4v'), 60, (video_w, video_h))
 
+        print(f'Generating Zoom Sequence')
         for i in range(len(self.__image_list)-1):
             img1 = self.__image_list[i]
             img2 = self.__image_list[i+1]
@@ -309,7 +304,7 @@ class InfiniZoom:
             hh = int(hh*0.8)
             img_next = ih.crop_image(img_next, (ww, hh))
 
-            if i==0:
+            if i == 0:
                 # The second image may not be perfectly centered. We need to determine 
                 # image offset to compensate
                 detector = TemplateDetector(threshold=0.3, max_num=1)
@@ -325,11 +320,11 @@ class InfiniZoom:
                 # successive zoom steps so that it is zero when switching to the next image.
                 ma_x = int(cx - bx)
                 ma_y = int(cy - by)
-                print(f'image misalignment: x={ma_x:.2f}; y={ma_y:.2f}')
+                print(f' - image misalignment: x={ma_x:.2f}; y={ma_y:.2f}')
                 
                 # Plausibility check. If the misalignment is too large something is wrong. Usually
                 # the images are not in sequence.
-                if math.sqrt(ma_x*ma_x + ma_y*ma_y) > 40:
+                if math.sqrt(ma_x*ma_x + ma_y*ma_y) > 60:
                     img_small = cv2.copyMakeBorder(img_next, 0, h - hh, 0, w - ww, cv2.BORDER_CONSTANT, value=[0,0,0])
                     image_debug = self.__merge_images_horizontally(img_curr, img_small, img_small)
 
