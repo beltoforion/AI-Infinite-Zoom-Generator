@@ -16,7 +16,9 @@ AI outpainting requires the use of a generative AI for images and can be done wi
 the easiest to create. In principle, this program will work with any outpainted image set.
 
 ## Preparing the images
-Before you start you need a set of outpainted ai images. Copy this set in a separate folder in the "input" folder.
+Before you start you need a set of outpainted ai images. Copy this set in a separate folder in the "input" folder. It is best 
+to order the images in the folder by giving them sequential names (i.e. "frame_01.png", "frame_02.png", ..., "frame_10.png").
+Alternatively you can use the "-as" option to let the script find out the image order for you. This process will take some time.
 
 * Create a set of outpainted images with the generative AI of your choice. The first image is the innermost image of the series.
 * The Image series must be zoomed with respect to the center
