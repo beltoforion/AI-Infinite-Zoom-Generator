@@ -13,6 +13,7 @@ def main():
     parser.add_argument('-o', '--Output', dest='output', help='Name of output file including mp4 extension.', required=False, type=str, default='output.mp4')
     parser.add_argument('-i', '--Input', dest='input_folder', help='Path to to folder containing input images.', required=True, type=str)
     parser.add_argument('-as', '--AutoSort', dest='auto_sort', help='Input images are unsorted, automatically sort them.', required=False, action='store_true', default=False)
+    parser.add_argument('-dbg', '--Debug', dest='debug', help='Enable debug aides', required=False, action='store_true', default=False)    
     parser.add_argument('-rev', '--Reverse', dest='reverse', help='Reverse the output video.', required=False, action='store_true', default=False)
     
     args = parser.parse_args()
@@ -26,6 +27,7 @@ def main():
     print(f' - zoom steps: {args.zoom_steps}')
     print(f' - zoom crop: {args.zoom_crop}')
     print(f' - auto sort: {args.auto_sort}')
+    print(f' - debug aides: {args.debug}')    
     print(f' - reverse: {args.reverse}')
 
     current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -33,6 +35,7 @@ def main():
     param = izoom.InfiniZoomParameter()
     param.reverse = False
     param.auto_sort = args.auto_sort
+    param.debug_mode = args.debug
     param.zoom_image_crop = args.zoom_crop
     param.zoom_steps = args.zoom_steps
     param.zoom_factor = args.zoom_factor  # The zoom factor used by midjourney

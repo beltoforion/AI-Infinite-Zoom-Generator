@@ -27,6 +27,24 @@ def crop_image(image, crop_size):
     return cropped_image
 
 
+def draw_cross(image, center, size, color=(0, 255, 0), thickness=2):
+    """
+    Draw a cross on the given image at the specified center coordinates with the given size, color, and thickness.
+    
+    Parameters:
+        image (numpy.ndarray): The image on which to draw the cross.
+        center (tuple): The center coordinates of the cross in (x, y) format.
+        size (int): The size of the cross.
+        color (tuple): The color of the cross in BGR format. Default is green (0, 255, 0).
+        thickness (int): The thickness of the cross lines. Default is 2.
+    """
+    x, y = center
+    half_size = size // 2
+
+    cv2.line(image, (x - half_size, y), (x + half_size, y), color, thickness)
+    cv2.line(image, (x, y - half_size), (x, y + half_size), color, thickness)
+
+
 def read_image(file : str, processor : Union[ProcessorBase, list] = None):
     """ Read an image in raw or jpeg.
         The image will be preprocesses with a list of processors.

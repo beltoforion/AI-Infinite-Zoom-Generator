@@ -13,7 +13,16 @@ class InfiniZoomParameter:
         self.__reverse = False
         self.__auto_sort = False
         self.__zoom_image_crop = 0.8
-        self.zoom_factor = 2
+        self.__zoom_factor = 2
+        self.__debug_mode = False
+
+    @property
+    def debug_mode(self):
+        return self.__debug_mode
+    
+    @debug_mode.setter
+    def debug_mode(self, state: bool):
+        self.__debug_mode = state
 
     @property
     def zoom_factor(self):
@@ -286,22 +295,30 @@ class InfiniZoom:
         img_curr = imgCurr.copy()
         img_next = imgNext.copy()
 
+        # Do the zoom
         for i in range(0, steps):
             zf = step_size_log**i
             
+            # zoom, the outter image
             mtx_curr = cv2.getRotationMatrix2D((cx, cy), 0, zf)
             img_curr = cv2.warpAffine(imgCurr, mtx_curr, (w, h))
 
-            ww = round(w * (zf/2.0))
-            hh = round(h * (zf/2.0))
-            mtx_next = cv2.getRotationMatrix2D((cx, cy), 0, zf/2.0)
+            # zoom the inner image, zoom factor is by the image series
+            # zoom factor smaller than that of the outter image
+            mtx_next = cv2.getRotationMatrix2D((cx, cy), 0, zf/self.__param.zoom_factor)
+            img_next = cv2.warpAffine(imgNext, mtx_next, (w, h))
 
-            img_next = imgNext.copy()
-            img_next = cv2.warpAffine(img_next, mtx_next, (w, h))
+            # Zoomed inner image now has same size as outter image but is padded with
+            # black pixels. We need to crop it to the proper size.
+            ww = round(w * (zf/self.__param.zoom_factor))
+            hh = round(h * (zf/self.__param.zoom_factor))
 
-            # Before copying throw away 25% of the outter image
-            ww = int(ww*0.8)
-            hh = int(hh*0.8)
+            # We cant use the entire image because close to the edges
+            # midjourney takes liberties with the content so we crop 
+            # the inner image. (I also tries soft blending but crop 
+            # looked better)
+            ww = int(ww * self.__param.zoom_image_crop)
+            hh = int(hh * self.__param.zoom_image_crop)
             img_next = ih.crop_image(img_next, (ww, hh))
 
             if i == 0:
@@ -313,25 +330,30 @@ class InfiniZoom:
                 if len(result)==0:
                     raise Exception("Cannot match image to precursor!")
 
+                # this is the "true" position that the inner image must 
+                # have to match perfectly onto the outter. Theoretically 
+                # it should always be centered to the outter image but 
+                # midjourney takes some liberties here and there may be 
+                # a significant offset (i.e. 20 Pixels).
                 bx, by, bw, bh, score = result[0, :5]
             
-                # compute initial misalignment of the second image. Ideally the second image 
-                # should be centered. We have to gradually eliminate the misalignment in the
-                # successive zoom steps so that it is zero when switching to the next image.
+                # compute initial misalignment of the second image. The second image 
+                # *should* be centered to the outter image but it is often not. 
+                # So we need to use this initial offset when we insert the inner image
+                # in order to not have visual jumps but we have to gradually eliminate the 
+                # misalignment as we zoom out that it is zero when switching to 
+                # the next image.
                 ma_x = int(cx - bx)
                 ma_y = int(cy - by)
                 print(f' - image misalignment: x={ma_x:.2f}; y={ma_y:.2f}')
                 
                 # Plausibility check. If the misalignment is too large something is wrong. Usually
                 # the images are not in sequence.
-                if math.sqrt(ma_x*ma_x + ma_y*ma_y) > 60:
+                if math.sqrt(ma_x*ma_x + ma_y*ma_y) > 50:
                     img_small = cv2.copyMakeBorder(img_next, 0, h - hh, 0, w - ww, cv2.BORDER_CONSTANT, value=[0,0,0])
                     image_debug = self.__merge_images_horizontally(img_curr, img_small, img_small)
 
-#                    cv2.imshow("Image", image_debug)
-#                    cv2.waitKey()
-
-                    raise Exception('Images are not properly aligned! Did you sort them correctly?')
+                    raise Exception('Image misalignment found! The images may not be in order, try using the "-as" option!')
 
                 # How much do we need to compensate for each step?
                 ma_comp_x = ma_x / steps
@@ -344,9 +366,6 @@ class InfiniZoom:
             ws = ww//2 + int(ma_x)
             img_curr[cy-hs:cy-hs+hh, cx-ws:cx-ws+ww] = img_next
 
-            #opacity = max(0, min(zf-1, 1))
-            #img_curr = ih.overlay_images(img_curr, img_next, (int(-ma_x), int(-ma_y)), 'center', opacity)
-
             # finally we have to gradually shift the resulting image back because the
             # next frame should again be close to the center and the misalignment compensation
             # brought us away. So we gradually shift the combined image back so that the center
@@ -355,6 +374,20 @@ class InfiniZoom:
             oy = ma_comp_y * i
             mtx_shift = np.float32([[1, 0, ox], [0, 1, oy]])
             img_curr = cv2.warpAffine(img_curr, mtx_shift, (img_curr.shape[1], img_curr.shape[0]))
+
+            if self.__param.debug_mode:
+                font      = cv2.FONT_HERSHEY_DUPLEX
+                fontScale = 0.75
+                thickness = 1
+                lineType  = 1
+                cv2.putText(img_curr, f'rel_zoom={zf:.2f}; dim={ww:.0f}x{hh:.0f}', (cx-ws+5, cy-hs+20), font, fontScale, (0,0,255), thickness, lineType)
+#                cv2.putText(img_curr, f'rel_zoom={zf:.2f}; dim={ww:.0f}x{hh:.0f}', (cx-ws+5, cy-hs+20), font, fontScale, (0,0,255), thickness, lineType)
+#                cv2.putText(img_curr, f'', (cx-ws+5, cy-hs+40), font, fontScale, (0,0,255), thickness, lineType)
+        
+                # Draw rectangle around actual image
+                cv2.rectangle(img_curr, (cx-ws, cy-hs), (cx-ws+ww, cy-hs+hh), (0,0,255), 1)
+                ih.draw_cross(img_curr, (cx, cy), 20, (0,255,0), 1)
+                ih.draw_cross(img_curr, (cx + int(ox), cy + int(oy)), 20, (0,0,255), 1)
 
 #            cv2.rectangle(img_curr, (int(bx-bw//2), int(by-bh//2)), (int(bx+bw//2), int(by+bh//2)), (0,0,255), 1)
 
