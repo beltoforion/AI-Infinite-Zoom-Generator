@@ -347,12 +347,9 @@ class InfiniZoom:
                 ma_y = int(cy - by)
                 print(f' - image misalignment: x={ma_x:.2f}; y={ma_y:.2f}')
                 
-                # Plausibility check. If the misalignment is too large something is wrong. Usually
-                # the images are not in sequence.
-                if math.sqrt(ma_x*ma_x + ma_y*ma_y) > 50:
-                    img_small = cv2.copyMakeBorder(img_next, 0, h - hh, 0, w - ww, cv2.BORDER_CONSTANT, value=[0,0,0])
-                    image_debug = self.__merge_images_horizontally(img_curr, img_small, img_small)
-
+                # Plausibility check. If the misalignment is too large something is wrong. 
+                # Usually the images are not in sequence or a zoom step is missing.
+                if abs(ma_x) > 50 or abs(ma_y) > 50:
                     raise Exception('Image misalignment found! The images may not be in order, try using the "-as" option!')
 
                 # How much do we need to compensate for each step?
@@ -362,8 +359,8 @@ class InfiniZoom:
             # Add the smaller image into the larger one but shift it to 
             # compensate the misalignment. Problem is that when it is maximized
             # it would be shifted off center. We need to fix that later.
-            hs = hh//2 + int(ma_y)
-            ws = ww//2 + int(ma_x)
+            hs = hh//2 + ma_y
+            ws = ww//2 + ma_x
             img_curr[cy-hs:cy-hs+hh, cx-ws:cx-ws+ww] = img_next
 
             # finally we have to gradually shift the resulting image back because the
@@ -372,32 +369,40 @@ class InfiniZoom:
             # position remains in the center.
             ox = ma_comp_x * i
             oy = ma_comp_y * i
+
+            if self.__param.debug_mode:
+                cv2.line(img_curr, (0, 0), (w, h), (0,0,255), thickness=1)
+                cv2.line(img_curr, (0, h), (w, 0), (0,0,255), thickness=1)
+
+                # Draw rectangle around actual image
+                cv2.rectangle(img_curr, (cx-ws, cy-hs), (cx-ws+ww, cy-hs+hh), (0,0,255), 1)
+
             mtx_shift = np.float32([[1, 0, ox], [0, 1, oy]])
             img_curr = cv2.warpAffine(img_curr, mtx_shift, (img_curr.shape[1], img_curr.shape[0]))
 
             if self.__param.debug_mode:
                 font      = cv2.FONT_HERSHEY_DUPLEX
-                fontScale = 0.75
+                fontScale = 0.6
                 thickness = 1
                 lineType  = 1
-                cv2.putText(img_curr, f'rel_zoom={zf:.2f}; dim={ww:.0f}x{hh:.0f}', (cx-ws+5, cy-hs+20), font, fontScale, (0,0,255), thickness, lineType)
-#                cv2.putText(img_curr, f'rel_zoom={zf:.2f}; dim={ww:.0f}x{hh:.0f}', (cx-ws+5, cy-hs+20), font, fontScale, (0,0,255), thickness, lineType)
-#                cv2.putText(img_curr, f'', (cx-ws+5, cy-hs+40), font, fontScale, (0,0,255), thickness, lineType)
+
+                xp = (w - video_w)//2
+                yp = (h - video_h)//2
+
+                cv2.putText(img_curr, f'rel_zoom={zf:.2f}', (xp+5, yp+20), font, fontScale, (0,0,255), thickness, lineType)
+                cv2.putText(img_curr, f'size_inner={ww:.0f}x{hh:.0f}', (xp+5, yp+40), font, fontScale, (0,0,255), thickness, lineType)
+                cv2.putText(img_curr, f'mis_align={ma_x},{ma_y}', (xp+5, yp+60), font, fontScale, (0,0,255), thickness, lineType)
+                cv2.putText(img_curr, f'mis_align_res={ma_x-ox:.1f},{ma_x-ox:0.1f}', (xp+5, yp+80), font, fontScale, (0,0,255), thickness, lineType)
         
-                # Draw rectangle around actual image
-                cv2.rectangle(img_curr, (cx-ws, cy-hs), (cx-ws+ww, cy-hs+hh), (0,0,255), 1)
-                ih.draw_cross(img_curr, (cx, cy), 20, (0,255,0), 1)
-                ih.draw_cross(img_curr, (cx + int(ox), cy + int(oy)), 20, (0,0,255), 1)
-
-#            cv2.rectangle(img_curr, (int(bx-bw//2), int(by-bh//2)), (int(bx+bw//2), int(by+bh//2)), (0,0,255), 1)
-
-            #print(f'bx={bx:.2f}; by={by:.2f}; score={score:.2f}; zoom={zf}; s1={ww}x{hh}; s2={h}x{w}')
+                # Draw static image center marker
+                cv2.line(img_curr, (cx, 0), (cx, h), (255, 0, 0), thickness=1)
+                cv2.line(img_curr, (0, cy), (w, cy), (255, 0, 0), thickness=1)
 
             # final crop, ther may be some inconsiostencies at the boundaries
             img_curr = ih.crop_image(img_curr, (video_w, video_h))
 
             video_writer.write(img_curr)
-            cv2.imshow("Image", img_curr)
+            cv2.imshow("Current Frame", img_curr)
             cv2.waitKey(10)
 
 

@@ -12,18 +12,18 @@
             "console": "integratedTerminal",
             "justMyCode": true,
             "args": [
-                "-zf", "1.33", 
+                "-zf", "2", 
                 "-zs", "100", 
                 "-zc", "0.8",
-                "-i", "input/sample_1.33x",
-//                "-i", "./input/nostradamus",
+//                "-i", "input/sample_1.33x",
+                "-i", "./input/nostradamus",
 //                "-i", "./input/pirate",
 //                "-i", "./input/pirate_unsorted",
 //                "-i", "./input/sample_ps",
 //                "-i", "./input/sample_ps2",
 //                "-i", "./input/street",
-                "-as", 
-                "-dbg",
+//                "-as", 
+//                "-dbg",
                 "-o", "myoutput.mp4"]
         }
     ]
