@@ -27,5 +27,6 @@ each image is matched against all other images to figure out their relations aut
   + The entire image series must use the same zoom factor (i.e. 2x)
 * Rename and order the image sequence by giving them sequential names. (i.e. "frame_01.png", "frame_02.png")
 
+## Using the script
 
 
