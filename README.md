@@ -6,8 +6,9 @@ quite easy to create since [Midjourney introduces the zoom out feature](https://
 https://github.com/beltoforion/ai_ever_zoom/assets/2202567/78bcbe99-8dbb-48d7-88bf-f8f400ed10c9
 
 ## What is AI Outpainting?
-Outpainting is a technique where you create an image with a generative AI and then zoom it out by a certain factor while letting the AI 
-fill in the newly created empty edge. By also changing the prompt, you can create scene transitions as you zoom out.
+Outpainting is a technique where zoom out of an image by a certain factor while letting a generative AI 
+fill in the newly created empty edge. By giving the AI new prompts, you can control the evolution of the scene 
+as you zoom out.
 
 ![outpainting_example](https://github.com/beltoforion/ai_ever_zoom/assets/2202567/206d4f06-6a9b-4b9b-8377-131a319d2457)
 
