@@ -37,7 +37,7 @@ python ./infinite_zoom.py -zf 2 -zs 100 -zc 0.8 -i ./samples_ps -o video.mp4
 
 ## Command Line Options
 
-<b>-zf</b><br/> Zoom factors used for creating the outpinted image sequence..
+<b>-zf</b><br/> Zoom factor used for creating the outpinted image sequence. For image sequences created by Midjourney use either "2" or "1.33". (Midjourney incorrectly states that it low zoom level is 1.5 but it is actually just 1.33)
 <br/><br/>
 <b>-zs</b><br/> Number of zoom steps for each image
 <br/><br/>
