@@ -27,6 +27,30 @@ each image is matched against all other images to figure out their relations aut
   + The entire image series must use the same zoom factor (i.e. 2x)
 * Rename and order the image sequence by giving them sequential names. (i.e. "frame_01.png", "frame_02.png")
 
-## Using the script
+## Usage
+
+You need python to execute this script. Put your input images into a folder and then run the script on the content of this folder.
+
+```python
+python ./infinite_zoom.py -zf 2 -zs 100 -zc 0.8 -i ./samples_ps -o video.mp4
+```
+
+## Command Line Options
+
+<b>-zf</b><br/> Zoom factor used for creating the outpinted image sequence. For image sequences created by Midjourney use either "2" or "1.33". (Midjourney incorrectly states that it low zoom level is 1.5 but it is actually just 1.33)
+<br/><br/>
+<b>-zs</b><br/> Number of zoom steps for each image
+<br/><br/>
+<b>-zc</b><br/> Crop zoomed images by this factor. Midjourney takes some liberties in modyfing the edge regions between zoom steps. They may not match perfectly.
+<br/><br/>
+<b>-i</b><br/> Path to folder with input images.
+<br/><br/>
+<b>-o</b><br/> Name of the output video file. Must have mp4 extension.
+<br/><br/>
+<b>-as</b><br/> Automatically sort input images. If you use this option you can name the images arbitrarily. The script will figure out the right order.
+<br/><br/>
+<b>-dbg</b><br/> Show debug overlays.
+
+
 
 
