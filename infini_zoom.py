@@ -402,7 +402,8 @@ class InfiniZoom:
             img_curr = ih.crop_image(img_curr, (video_w, video_h))
 
             video_writer.write(img_curr)
-            cv2.imshow("Current Frame", img_curr)
+
+            cv2.imshow("Video generation in progress...", img_curr)
             cv2.waitKey(10)
 
 

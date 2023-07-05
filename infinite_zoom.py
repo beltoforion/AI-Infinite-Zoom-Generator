@@ -1,4 +1,3 @@
-import os
 import infini_zoom as izoom
 import argparse
 
