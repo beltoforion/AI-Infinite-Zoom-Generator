@@ -139,15 +139,20 @@ class InfiniZoom:
 
         detector = TemplateDetector(threshold=0.01, max_num=1)
 
-        print(f' - matching images')
+#        print(f' - matching images')
 
         num = len(self.__image_list)
         scores = np.zeros((num, num))
+
+        prog = 0
         for i in range(0, num):
             for j in range(0, num):
                 if i==j:
                     continue
                 
+                prog += 1
+                print(f' - matching images {100*prog/(num*num-num):.0f} %    ', end='\r')
+
                 img1 = self.__image_list[i].copy()
                 img2 = self.__image_list[j].copy()
                 if img1.shape != img2.shape:
@@ -173,7 +178,6 @@ class InfiniZoom:
                     bx, by, bw, bh, score = result[0, :5]
 
                 scores[i, j] = score
-                print(f'.', end='')
 
         # process the data to find the best matches for each image        
         self.__image_list = self.__filter_array(scores)
@@ -299,7 +303,7 @@ class InfiniZoom:
 
 
     def zoom_in(self, imgCurr, imgNext, video_w, video_h):
-        steps = self.__param.zoom_steps
+        zoom_steps = self.__param.zoom_steps
 
         # imgNext has exactly a quarter the size of img
         h, w = imgCurr.shape[:2]
@@ -308,14 +312,14 @@ class InfiniZoom:
 
         # compute step size for each partial image zoom. Zooming is an exponential
         # process, so we need to compute the steps on a logarithmic scale.
-        step_size_log = math.exp(math.log(self.__param.zoom_factor)/steps)
+        step_size_log = math.exp(math.log(self.__param.zoom_factor)/zoom_steps)
 
         zf = 1
         img_curr = imgCurr.copy()
         img_next = imgNext.copy()
 
         # Do the zoom
-        for i in range(0, steps):
+        for i in range(0, zoom_steps):
             zf = step_size_log**i
             
             # zoom, the outter image
@@ -364,7 +368,6 @@ class InfiniZoom:
                 # the next image.
                 ma_x = int(cx - bx)
                 ma_y = int(cy - by)
-                print(f' - image misalignment: x={ma_x:.2f}; y={ma_y:.2f}')
                 
                 # Plausibility check. If the misalignment is too large something is wrong. 
                 # Usually the images are not in sequence or a zoom step is missing.
@@ -372,8 +375,8 @@ class InfiniZoom:
                     raise Exception('Image misalignment found! The images may not be in order, try using the "-as" option!')
 
                 # How much do we need to compensate for each step?
-                ma_comp_x = ma_x / steps
-                ma_comp_y = ma_y / steps
+                ma_comp_x = ma_x / zoom_steps
+                ma_comp_y = ma_y / zoom_steps
 
             # Add the smaller image into the larger one but shift it to 
             # compensate the misalignment. Problem is that when it is maximized
@@ -389,12 +392,20 @@ class InfiniZoom:
             ox = ma_comp_x * i
             oy = ma_comp_y * i
 
+            print(f' - frame misalignment: zoom_step={i}; x_total={ma_x:.2f}; y_total={ma_y:.2f}; x_step={ma_x-ox:.2f}; y_step={ma_y-oy:.2f}', end='\r')
+
             if self.__param.debug_mode:
+                # Draw Center cross for outter image
                 cv2.line(img_curr, (0, 0), (w, h), (0,0,255), thickness=1)
                 cv2.line(img_curr, (0, h), (w, 0), (0,0,255), thickness=1)
 
                 # Draw rectangle around actual image
-                cv2.rectangle(img_curr, (cx-ws, cy-hs), (cx-ws+ww, cy-hs+hh), (0,0,255), 1)
+                cv2.rectangle(img_curr, (cx-ws, cy-hs), (cx-ws+ww, cy-hs+hh), (0,255,0), 1)
+
+                # Draw Center cross for inner image
+                cv2.line(img_curr, (cx-ws, cy-hs), (cx-ws+ww, cy-hs+hh), (0,255,0), thickness=1)
+                cv2.line(img_curr, (cx-ws, cy-hs+hh), (cx-ws+ww, cy-hs), (0,255,0), thickness=1)
+
 
             mtx_shift = np.float32([[1, 0, ox], [0, 1, oy]])
             img_curr = cv2.warpAffine(img_curr, mtx_shift, (img_curr.shape[1], img_curr.shape[0]))
@@ -423,7 +434,11 @@ class InfiniZoom:
             self.__frames.append(img_curr)
 
             cv2.imshow("Frame generation progress...", img_curr)
-            cv2.waitKey(10)
+            key = cv2.waitKey(10)
+            if key == 27 or cv2.getWindowProperty("Frame generation progress...", cv2.WND_PROP_VISIBLE) < 1:
+                raise Exception("User aborted!")
+
+        print()
 
 
 

@@ -54,4 +54,7 @@ def main():
     iz.process()
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception as ex:
+        print(f'\nError: {ex}')
