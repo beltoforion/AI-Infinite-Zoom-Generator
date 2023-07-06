@@ -89,6 +89,7 @@ class InfiniZoom:
         self.__param = param
         self.__image_list = []
         self.__video_writer = None
+        self.__frames = []
 
 
     def __load_images(self):
@@ -266,20 +267,38 @@ class InfiniZoom:
 
         video_w = int(w * self.__param.zoom_image_crop)
         video_h = int(h * self.__param.zoom_image_crop)
-        self.__video_writer = cv2.VideoWriter(self.__param.output_file, cv2.VideoWriter_fourcc(*'mp4v'), 60, (video_w, video_h))
+
+        self.__frames = []
 
         print(f'Generating Zoom Sequence')
         for i in range(len(self.__image_list)-1):
             img1 = self.__image_list[i]
             img2 = self.__image_list[i+1]
 
-            self.zoom_in(self.__video_writer, img1, img2, video_w, video_h)
+            self.zoom_in(img1, img2, video_w, video_h)
 
         cv2.destroyAllWindows()
+
+        self.__create_video(video_w, video_h)
+        print(f'Done\r\n')
+
+
+    def __create_video(self, video_w, video_h):
+
+        print(f'Creating output file {self.__param.output_file} ')
+        self.__video_writer = cv2.VideoWriter(self.__param.output_file, cv2.VideoWriter_fourcc(*'mp4v'), 60, (video_w, video_h))
+
+        if self.__param.reverse:        
+            for frame in reversed(self.__frames):
+                self.__video_writer.write(frame)
+        else:
+            for frame in self.__frames:
+                self.__video_writer.write(frame)
+
         self.__video_writer.release()
 
 
-    def zoom_in(self, video_writer, imgCurr, imgNext, video_w, video_h):
+    def zoom_in(self, imgCurr, imgNext, video_w, video_h):
         steps = self.__param.zoom_steps
 
         # imgNext has exactly a quarter the size of img
@@ -401,9 +420,9 @@ class InfiniZoom:
             # final crop, ther may be some inconsiostencies at the boundaries
             img_curr = ih.crop_image(img_curr, (video_w, video_h))
 
-            video_writer.write(img_curr)
+            self.__frames.append(img_curr)
 
-            cv2.imshow("Video generation in progress...", img_curr)
+            cv2.imshow("Frame generation progress...", img_curr)
             cv2.waitKey(10)
 
 

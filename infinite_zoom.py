@@ -41,7 +41,7 @@ def main():
     print(f' - reverse: {args.reverse}')
 
     param = izoom.InfiniZoomParameter()
-    param.reverse = False
+    param.reverse = args.reverse
     param.auto_sort = args.auto_sort
     param.debug_mode = args.debug
     param.zoom_image_crop = args.zoom_crop
