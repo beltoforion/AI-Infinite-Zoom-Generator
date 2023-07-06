@@ -226,10 +226,10 @@ class InfiniZoom:
                 print(f' - Discarding image {idx} because it is unconnected to other images!')
 
         if len(start_candidates)==0:
-            raise("Aborting: Could not find start image!")
+            raise Exception("Aborting: Could not find start image!")
 
         if len(start_candidates)>1:
-            raise(f'Aborting: Clean up image series! Found {len(start_candidates)} different images that could be the starting image!')
+            raise Exception(f'Aborting: Clean up image series! Found {len(start_candidates)} different images that could be the starting image!')
 
         # finally build sorted image list
         sequence_order = self.__assemble_image_sequence(idx, filtered)
