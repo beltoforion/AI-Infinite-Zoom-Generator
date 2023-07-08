@@ -64,6 +64,8 @@ class TemplateDetector(DetectorBase):
         if self.__method in [cv2.TM_SQDIFF, cv2.TM_SQDIFF_NORMED]:
             res = 1 - res
 
+        result_copy = res.copy()
+
         if threshold is None:
             threshold = self.__threshold
 
@@ -93,4 +95,4 @@ class TemplateDetector(DetectorBase):
                 # therefor pattern size/2 needs to be added.
                 rects.append((int(x + self.__width//2), int(y + self.__height//2), self.__width, self.__height, max_val, 0))
 
-        return np.array(rects), res
+        return np.array(rects), result_copy

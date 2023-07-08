@@ -91,6 +91,11 @@ class InfiniZoom:
         self.__video_writer = None
         self.__frames = []
 
+        self.__font      = cv2.FONT_HERSHEY_DUPLEX
+        self.__fontScale = 0.6
+        self.__fontThickness = 1
+        self.__fontLineType  = 1
+
 
     def __load_images(self):
         if not self.__param.input_path.exists():
@@ -112,34 +117,11 @@ class InfiniZoom:
 
             print()
 
-    def __merge_images_horizontally(self,image1, image2, image3, scale=0.5):
-        # Check if the input images have the same size
-        if image1.shape != image2.shape or image1.shape != image3.shape:
-            raise ValueError("Input images must have the same size.")
-
-        # Downscale the images
-        scaled_image1 = cv2.resize(image1, None, fx=scale, fy=scale)
-        scaled_image2 = cv2.resize(image2, None, fx=scale, fy=scale)
-        scaled_image3 = cv2.resize(image3, None, fx=scale, fy=scale)
-
-        # Create a new blank image with triple width
-        merged_width = int(scaled_image1.shape[1] + scaled_image2.shape[1] + scaled_image3.shape[1])
-        merged_height = min(scaled_image1.shape[0], scaled_image2.shape[0], scaled_image3.shape[0])
-        merged_image = np.zeros((merged_height, merged_width, 3), dtype=np.uint8)
-
-        # Stack the images horizontally
-        merged_image[:, :scaled_image1.shape[1]] = scaled_image1
-        merged_image[:, scaled_image1.shape[1]:scaled_image1.shape[1]+scaled_image2.shape[1]] = scaled_image2
-        merged_image[:, scaled_image1.shape[1]+scaled_image2.shape[1]:] = scaled_image3
-
-        return merged_image
 
     def __auto_sort(self):
         print(f'Determining image order')
 
         detector = TemplateDetector(threshold=0.01, max_num=1)
-
-#        print(f' - matching images')
 
         num = len(self.__image_list)
         scores = np.zeros((num, num))
@@ -166,10 +148,31 @@ class InfiniZoom:
                 detector.pattern = img2
                 result, result_img = detector.search(img1)
 
-#                img22 = cv2.copyMakeBorder(img2, 0, h-img2.shape[0], 0, w-img2.shape[1], cv2.BORDER_CONSTANT, value=[0,0,0])
-#                merge = self.__merge_images_horizontally(self.__image_list[i], img22, img22)
-#                cv2.imshow("Image", merge)
-#                cv2.waitKey()
+                if self.__param.debug_mode:
+                    # convert result_img to 8 bit
+                    result_img = np.clip(result_img * 255, 0, 255).astype(np.uint8)
+
+                    # copy correlation image centered into an image with the same size 
+                    # as the original
+                    corr_result = np.zeros(img1.shape, np.uint8)
+                    rh, rw = result_img.shape[0:2]
+                    corr_result[rh//2:(rh//2)+rh, rw//2:(rw//2)+rw, :] = result_img[..., np.newaxis]
+
+                    overview_image = np.zeros((h*2, w*2, 3), np.uint8)
+                    overview_image[0:h, 0:w, :] = img1
+                    overview_image[0:img2.shape[0], w:w+img2.shape[1], :] = img2
+                    overview_image[h:2*h, 0:w, :] = corr_result
+
+                    max_width = 1000
+                    scale = max_width / overview_image.shape[1]
+                    overview_image = cv2.resize(overview_image, None, fx=scale, fy=scale)
+                    ho, wo = overview_image.shape[:2]
+                    cv2.putText(overview_image, f'series image {i}', (20, 20), self.__font, self.__fontScale, (0,255,0), self.__fontThickness, self.__fontLineType)
+                    cv2.putText(overview_image, f'normalized cross correlation', (20, ho//2+20), self.__font, self.__fontScale, (0,255,0), self.__fontThickness, self.__fontLineType)
+                    cv2.putText(overview_image, f'candidate {j}', (wo//2 + 20, 20), self.__font, self.__fontScale, (0,255,0), self.__fontThickness, self.__fontLineType)                    
+
+                    cv2.imshow("Finding image order", overview_image)
+                    cv2.waitKey(10)
 
                 if len(result)==0:
                     print(f'Correlating image {i} with image {j}: images are uncorrelated.')
@@ -371,7 +374,7 @@ class InfiniZoom:
                 
                 # Plausibility check. If the misalignment is too large something is wrong. 
                 # Usually the images are not in sequence or a zoom step is missing.
-                if abs(ma_x) > 50 or abs(ma_y) > 50:
+                if abs(ma_x) > 50 or abs(ma_y) > 70:
                     raise Exception('Image misalignment found! The images may not be in order, try using the "-as" option!')
 
                 # How much do we need to compensate for each step?
@@ -411,18 +414,13 @@ class InfiniZoom:
             img_curr = cv2.warpAffine(img_curr, mtx_shift, (img_curr.shape[1], img_curr.shape[0]))
 
             if self.__param.debug_mode:
-                font      = cv2.FONT_HERSHEY_DUPLEX
-                fontScale = 0.6
-                thickness = 1
-                lineType  = 1
-
                 xp = (w - video_w)//2
                 yp = (h - video_h)//2
 
-                cv2.putText(img_curr, f'rel_zoom={zf:.2f}', (xp+5, yp+20), font, fontScale, (0,0,255), thickness, lineType)
-                cv2.putText(img_curr, f'size_inner={ww:.0f}x{hh:.0f}', (xp+5, yp+40), font, fontScale, (0,0,255), thickness, lineType)
-                cv2.putText(img_curr, f'mis_align={ma_x},{ma_y}', (xp+5, yp+60), font, fontScale, (0,0,255), thickness, lineType)
-                cv2.putText(img_curr, f'mis_align_res={ma_x-ox:.1f},{ma_x-ox:0.1f}', (xp+5, yp+80), font, fontScale, (0,0,255), thickness, lineType)
+                cv2.putText(img_curr, f'rel_zoom={zf:.2f}', (xp+5, yp+20), self.__font, self.__fontScale, (0,0,255), self.__fontThickness, self.__fontLineType)
+                cv2.putText(img_curr, f'size_inner={ww:.0f}x{hh:.0f}', (xp+5, yp+40), self.__font, self.__fontScale, (0,0,255), self.__fontThickness, self.__fontLineType)
+                cv2.putText(img_curr, f'mis_align={ma_x},{ma_y}', (xp+5, yp+60), self.__font, self.__fontScale, (0,0,255), self.__fontThickness, self.__fontLineType)
+                cv2.putText(img_curr, f'mis_align_res={ma_x-ox:.1f},{ma_x-ox:0.1f}', (xp+5, yp+80), self.__font, self.__fontScale, (0,0,255), self.__fontThickness, self.__fontLineType)
         
                 # Draw static image center marker
                 cv2.line(img_curr, (cx, 0), (cx, h), (255, 0, 0), thickness=1)
