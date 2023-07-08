@@ -5,6 +5,7 @@ from detectors.template_detector import *
 import helper.image_helper as ih
 import cv2
 import math
+import time
 
 
 class InfiniZoomParameter:
@@ -127,7 +128,12 @@ class InfiniZoom:
         scores = np.zeros((num, num))
 
         prog = 0
+        debug_frames = []
+
         for i in range(0, num):
+            max_score = 0
+            best_match = None
+
             for j in range(0, num):
                 if i==j:
                     continue
@@ -148,6 +154,16 @@ class InfiniZoom:
                 detector.pattern = img2
                 result, result_img = detector.search(img1)
 
+                if len(result)==0:
+                    print(f'Correlating image {i} with image {j}: images are uncorrelated.')
+                    continue
+                else:                    
+                    bx, by, bw, bh, score = result[0, :5]
+
+                if score > max_score:
+                    max_score = score
+                    best_match = self.__image_list[j].copy()
+
                 if self.__param.debug_mode:
                     # convert result_img to 8 bit
                     result_img = np.clip(result_img * 255, 0, 255).astype(np.uint8)
@@ -160,30 +176,49 @@ class InfiniZoom:
 
                     overview_image = np.zeros((h*2, w*2, 3), np.uint8)
                     overview_image[0:h, 0:w, :] = img1
-                    overview_image[0:img2.shape[0], w:w+img2.shape[1], :] = img2
-                    overview_image[h:2*h, 0:w, :] = corr_result
+                    overview_image[0:h, w:w+best_match.shape[1], :] = best_match
 
-                    max_width = 1000
+                    overview_image[h:h+img2.shape[0], 0:img2.shape[1], :] = img2
+                    overview_image[h:h+corr_result.shape[0], w:w+corr_result.shape[1], :] = corr_result
+
+                    max_width = 1200
                     scale = max_width / overview_image.shape[1]
-                    overview_image = cv2.resize(overview_image, None, fx=scale, fy=scale)
+                    new_width = int(overview_image.shape[1] * scale)
+                    new_height = int(overview_image.shape[0] * scale)
+
+                    overview_image = cv2.resize(overview_image, (new_width, new_height))
                     ho, wo = overview_image.shape[:2]
-                    cv2.putText(overview_image, f'series image {i}', (20, 20), self.__font, self.__fontScale, (0,255,0), self.__fontThickness, self.__fontLineType)
-                    cv2.putText(overview_image, f'normalized cross correlation', (20, ho//2+20), self.__font, self.__fontScale, (0,255,0), self.__fontThickness, self.__fontLineType)
-                    cv2.putText(overview_image, f'candidate {j}', (wo//2 + 20, 20), self.__font, self.__fontScale, (0,255,0), self.__fontThickness, self.__fontLineType)                    
+                    cv2.putText(overview_image, f'series image {i} of {num}; progress is {100*prog/(num*num-num):.0f} %', (20, 20), self.__font, self.__fontScale, (0,255,0), self.__fontThickness, self.__fontLineType)
+                    cv2.putText(overview_image, f'best match so far; score={max_score:.2f}', (wo//2 + 20, 20), self.__font, self.__fontScale, (0,255,0), self.__fontThickness, self.__fontLineType)                    
+                    cv2.putText(overview_image, f'normalized cross correlation', (wo//2 + 20, ho//2+20), self.__font, self.__fontScale, (0,255,0), self.__fontThickness, self.__fontLineType)
+                    cv2.putText(overview_image, f'candidate {j}', (20, ho//2+20), self.__font, self.__fontScale, (0,255,0), self.__fontThickness, self.__fontLineType)                    
+
+                    if debug_frames!=None:
+                        debug_frames.append(overview_image.copy())
 
                     cv2.imshow("Finding image order", overview_image)
                     cv2.waitKey(10)
 
-                if len(result)==0:
-                    print(f'Correlating image {i} with image {j}: images are uncorrelated.')
-                    continue
-                else:                    
-                    bx, by, bw, bh, score = result[0, :5]
-
                 scores[i, j] = score
+            
+            time.sleep(1)
+
+            if debug_frames!=None:
+                for i in range(0,20):
+                    debug_frames.append(overview_image.copy())
 
         # process the data to find the best matches for each image        
         self.__image_list = self.__filter_array(scores)
+        cv2.destroyAllWindows()
+
+        if debug_frames!=None:
+            vh, vw = overview_image.shape[:2]
+            self.__video_writer = cv2.VideoWriter("debug.mp4", cv2.VideoWriter_fourcc(*'mp4v'), 10, (vw, vh))
+
+            for frame in debug_frames:
+                self.__video_writer.write(frame)
+
+            self.__video_writer.release()
 
 
     def __filter_array(self, arr):

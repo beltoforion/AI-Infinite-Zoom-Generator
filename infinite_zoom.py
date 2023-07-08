@@ -1,4 +1,4 @@
-import infini_zoom as izoom
+import infinite_zoom_impl as izoom
 import argparse
 
 from pathlib import Path
