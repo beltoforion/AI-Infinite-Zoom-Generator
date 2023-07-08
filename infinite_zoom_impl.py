@@ -128,7 +128,7 @@ class InfiniZoom:
         scores = np.zeros((num, num))
 
         prog = 0
-        debug_frames = []
+        debug_frames = None
 
         for i in range(0, num):
             max_score = 0
