@@ -16,14 +16,14 @@
                 "-zs", "100", 
                 "-zc", "0.8",
 //                "-i", "input/sample_1.33x",
-                  "-i", "./input/sample_fairytale",                
-//                "-i", "./input/sample_nostradamus",
+//                  "-i", "./input/sample_fairytale",                
+                "-i", "./input/sample_nostradamus",
 //                "-i", "./input/sample_pirate",
 //                "-i", "./input/sample2a",
 //                "-i", "./input/sample_ps2",
-                "-as", 
-                "-rev",                 
-                "-dbg",
+//                "-as", 
+//                "-rev",                 
+//                "-dbg",
                 "-o", "myoutput.mp4"]
         }
     ]

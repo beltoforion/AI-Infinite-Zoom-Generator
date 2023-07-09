@@ -350,29 +350,29 @@ class InfiniZoom:
 
         # compute step size for each partial image zoom. Zooming is an exponential
         # process, so we need to compute the steps on a logarithmic scale.
-        step_size_log = math.exp(math.log(self.__param.zoom_factor)/zoom_steps)
+        f = math.exp(math.log(self.__param.zoom_factor)/zoom_steps)
 
-        zf = 1
+        # copy images because we will modify them
         img_curr = imgCurr.copy()
         img_next = imgNext.copy()
 
         # Do the zoom
         for i in range(0, zoom_steps):
-            zf = step_size_log**i
+            zoom_factor = f**i
             
             # zoom, the outter image
-            mtx_curr = cv2.getRotationMatrix2D((cx, cy), 0, zf)
+            mtx_curr = cv2.getRotationMatrix2D((cx, cy), 0, zoom_factor)
             img_curr = cv2.warpAffine(imgCurr, mtx_curr, (w, h))
 
             # zoom the inner image, zoom factor is by the image series
             # zoom factor smaller than that of the outter image
-            mtx_next = cv2.getRotationMatrix2D((cx, cy), 0, zf/self.__param.zoom_factor)
+            mtx_next = cv2.getRotationMatrix2D((cx, cy), 0, zoom_factor/self.__param.zoom_factor)
             img_next = cv2.warpAffine(imgNext, mtx_next, (w, h))
 
             # Zoomed inner image now has same size as outter image but is padded with
             # black pixels. We need to crop it to the proper size.
-            ww = round(w * (zf/self.__param.zoom_factor))
-            hh = round(h * (zf/self.__param.zoom_factor))
+            ww = round(w * (zoom_factor/self.__param.zoom_factor))
+            hh = round(h * (zoom_factor/self.__param.zoom_factor))
 
             # We cant use the entire image because close to the edges
             # midjourney takes liberties with the content so we crop 
@@ -406,7 +406,8 @@ class InfiniZoom:
                 # the next image.
                 ma_x = int(cx - bx)
                 ma_y = int(cy - by)
-                
+
+
                 # Plausibility check. If the misalignment is too large something is wrong. 
                 # Usually the images are not in sequence or a zoom step is missing.
                 if abs(ma_x) > 50 or abs(ma_y) > 70:
@@ -452,7 +453,7 @@ class InfiniZoom:
                 xp = (w - video_w)//2
                 yp = (h - video_h)//2
 
-                cv2.putText(img_curr, f'rel_zoom={zf:.2f}', (xp+5, yp+20), self.__font, self.__fontScale, (0,0,255), self.__fontThickness, self.__fontLineType)
+                cv2.putText(img_curr, f'rel_zoom={zoom_factor:.2f}', (xp+5, yp+20), self.__font, self.__fontScale, (0,0,255), self.__fontThickness, self.__fontLineType)
                 cv2.putText(img_curr, f'size_inner={ww:.0f}x{hh:.0f}', (xp+5, yp+40), self.__font, self.__fontScale, (0,0,255), self.__fontThickness, self.__fontLineType)
                 cv2.putText(img_curr, f'mis_align={ma_x},{ma_y}', (xp+5, yp+60), self.__font, self.__fontScale, (0,0,255), self.__fontThickness, self.__fontLineType)
                 cv2.putText(img_curr, f'mis_align_res={ma_x-ox:.1f},{ma_x-ox:0.1f}', (xp+5, yp+80), self.__font, self.__fontScale, (0,0,255), self.__fontThickness, self.__fontLineType)
