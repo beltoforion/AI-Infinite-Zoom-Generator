@@ -209,9 +209,9 @@ class InfiniZoom:
 
                 scores[i, j] = score
             
-            time.sleep(1)
-
             if debug_frames!=None:
+                time.sleep(1)
+
                 for i in range(0,20):
                     debug_frames.append(overview_image.copy())
 
