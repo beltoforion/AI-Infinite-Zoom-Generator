@@ -18,6 +18,14 @@ class InfiniZoomParameter:
         self.__debug_mode = False
 
     @property
+    def delay(self):
+        return self.__delay
+    
+    @delay.setter
+    def delay(self, value: float):
+        self.__delay = value
+
+    @property
     def debug_mode(self):
         return self.__debug_mode
     
@@ -326,16 +334,26 @@ class InfiniZoom:
 
 
     def __create_video(self, video_w, video_h):
-
+        fps = 60.0
         print(f'Creating output file {self.__param.output_file} ')
-        self.__video_writer = cv2.VideoWriter(self.__param.output_file, cv2.VideoWriter_fourcc(*'mp4v'), 60, (video_w, video_h))
+        self.__video_writer = cv2.VideoWriter(self.__param.output_file, cv2.VideoWriter_fourcc(*'mp4v'), fps, (video_w, video_h))
+
+        num_stills = int(self.__param.delay * fps)
 
         if self.__param.reverse:        
-            for frame in reversed(self.__frames):
-                self.__video_writer.write(frame)
+            frames = reversed(self.__frames)
         else:
-            for frame in self.__frames:
+            frames = self.__frames
+
+        ct = 0
+        for frame in frames:
+            if ct==0 or ct==len(self.__frames)-1:
+                for i in range(num_stills):
+                    self.__video_writer.write(frame)
+            else:
                 self.__video_writer.write(frame)
+
+            ct += 1
 
         self.__video_writer.release()
 

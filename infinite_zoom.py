@@ -24,6 +24,7 @@ def main():
     parser.add_argument('-i', '--Input', dest='input_folder', help='Path to to folder containing input images.', required=True, type=str)
     parser.add_argument('-as', '--AutoSort', dest='auto_sort', help='Input images are unsorted, automatically sort them.', required=False, action='store_true', default=False)
     parser.add_argument('-dbg', '--Debug', dest='debug', help='Enable debug aides', required=False, action='store_true', default=False)    
+    parser.add_argument('-d', '--Delay', dest='delay', help='Start/Stop delay in seconds', required=False, type=float, default=0.0)    
     parser.add_argument('-rev', '--Reverse', dest='reverse', help='Reverse the output video.', required=False, action='store_true', default=False)
     
     args = parser.parse_args()
@@ -38,6 +39,7 @@ def main():
     print(f' - zoom crop: {args.zoom_crop}')
     print(f' - auto sort: {args.auto_sort}')
     print(f' - debug aides: {args.debug}')    
+    print(f' - delay: {args.delay}')        
     print(f' - reverse: {args.reverse}')
 
     param = izoom.InfiniZoomParameter()
@@ -49,6 +51,7 @@ def main():
     param.zoom_factor = args.zoom_factor  # The zoom factor used by midjourney
     param.input_path = Path(args.input_folder)
     param.output_file = args.output       # name of the output video file
+    param.delay = args.delay
 
     iz = izoom.InfiniZoom(param)
     iz.process()
