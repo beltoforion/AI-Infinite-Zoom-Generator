@@ -16,6 +16,26 @@ class InfiniZoomParameter:
         self.__zoom_image_crop = 0.8
         self.__zoom_factor = 2
         self.__debug_mode = False
+        self.__fps = 60
+        self.__output_frames = False
+        self.__output_folder = ''
+        self.__output_file = ''
+
+    @property
+    def output_frames(self):
+        return self.__output_frames
+    
+    @output_frames.setter
+    def output_frames(self, value: float):
+        self.__output_frames = value
+
+    @property
+    def fps(self):
+        return self.__fps
+    
+    @fps.setter
+    def fps(self, value: float):
+        self.__fps = value
 
     @property
     def delay(self):
@@ -91,6 +111,14 @@ class InfiniZoomParameter:
     @output_file.setter
     def output_file(self, file):
         self.__output_file = file
+
+    @property
+    def output_folder(self):
+        return self.__output_folder
+    
+    @output_folder.setter
+    def output_folder(self, folder):
+        self.__output_folder = folder
 
 
 class InfiniZoom:
@@ -329,16 +357,34 @@ class InfiniZoom:
 
         cv2.destroyAllWindows()
 
-        self.__create_video(video_w, video_h)
-        print(f'Done\r\n')
+        if self.__param.output_frames:
+            self.__save_frames()
+        else:
+            self.__create_video(video_w, video_h)
+
+        print(f'\nDone\n')
+
+
+    def __save_frames(self):
+        print(f'Saving frames to output folder {self.__param.output_folder} ')
+
+        if self.__param.reverse:        
+            frames = reversed(self.__frames)
+        else:
+            frames = self.__frames
+
+        ct = 0
+        for frame in frames:
+            print(f' - Saving frame {ct}', end='\r')
+            cv2.imwrite(f'{self.__param.output_folder}/frame_{ct:05d}.png', frame)
+            ct += 1
 
 
     def __create_video(self, video_w, video_h):
-        fps = 60.0
         print(f'Creating output file {self.__param.output_file} ')
-        self.__video_writer = cv2.VideoWriter(self.__param.output_file, cv2.VideoWriter_fourcc(*'mp4v'), fps, (video_w, video_h))
+        self.__video_writer = cv2.VideoWriter(self.__param.output_file, cv2.VideoWriter_fourcc(*'mp4v'), self.__param.fps, (video_w, video_h))
 
-        num_stills = int(self.__param.delay * fps)
+        num_stills = int(self.__param.delay * self.__param.fps)
 
         if self.__param.reverse:        
             frames = reversed(self.__frames)

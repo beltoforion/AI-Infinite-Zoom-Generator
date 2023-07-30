@@ -26,7 +26,8 @@
                 "-as", 
                 "-rev",                 
 //                "-dbg",
-                "-o", "myoutput.mp4"]
+                "-o", "output_frames/"]
+//                "-o", "myoutput.mp4"]
         }
     ]
 }
