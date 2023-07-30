@@ -39,6 +39,12 @@ You need python to execute this script. Put your input images into a folder and 
 ```python
 python ./infinite_zoom.py -zf 2 -zs 100 -zc 0.8 -i ./samples_ps -o video.mp4
 ```
+or an example to dump the frames without creating a video file:
+
+```python
+python3 ./infinite_zoom.py -as -i ./sample_fairytale -o myframes/
+```
+
 
 ## Command Line Options
 
@@ -50,13 +56,16 @@ python ./infinite_zoom.py -zf 2 -zs 100 -zc 0.8 -i ./samples_ps -o video.mp4
 <br/><br/>
 <b>-i</b><br/> Path to folder with input images.
 <br/><br/>
-<b>-o</b><br/> Name of the output video file. Must have mp4 extension.
+<b>-o</b><br/> Name of the output folder or file. Must either be a valid file name with an mp4 extension or a folder name. If no extension is given it is assumed to be a folder name and the output will consist of the frame dump instead of a single video file.
 <br/><br/>
 <b>-as</b><br/> Automatically sort input images. If you use this option you can name the images arbitrarily. The script will figure out the right order.
 <br/><br/>
 <b>-dbg</b><br/> Show debug overlays.
 <br/><br/>
 <b>-rev</b><br/> Reverse the video. This will create a zoom out effect.
+<br/><br/>
+<b>-fps</b><br/> Set the target framerate of the output video.
+
 
 
 
