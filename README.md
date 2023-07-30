@@ -1,8 +1,8 @@
 # Creating an "Inifinite Zoom" from AI-Outpainted images
 The Python command line script published here can turn a series of AI-generated images into a zoom animation. For more details have a look at my web page were I explain the inner workings in detail:
 
-* In German: https://beltoforion.de/de/infinite_zoom/index.php
-* In English: https://beltoforion.de/en/infinite_zoom/index.php
+* In German: https://beltoforion.de/de/infinite_zoom
+* In English: https://beltoforion.de/en/infinite_zoom
 
 Here is an example video created by the script:
 
