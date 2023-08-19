@@ -48,7 +48,7 @@ python3 ./infinite_zoom.py -as -i ./sample_fairytale -o myframes/
 
 ## Command Line Options
 
-<b>-zf</b><br/> Zoom factor used for creating the outpinted image sequence. For image sequences created by Midjourney use either "2" or "1.33". (Midjourney incorrectly states that it low zoom level is 1.5 but it is actually just 1.33)
+<b>-zf</b><br/> Zoom factor used for creating the outpinted image sequence. For image sequences created by Midjourney use either "2" or "1.333". (Midjourney incorrectly states that it low zoom level is 1.5 but it is actually just 1.333) For an image series created with Lexica use 1.5. If you are unsure compute the zoom factor yourself by using two successive images of the series and matching them manually in the image processing software of your choice. If the zoom factor is incorrect this script cannot work properly!
 <br/><br/>
 <b>-zs</b><br/> Number of zoom steps for each image
 <br/><br/>
