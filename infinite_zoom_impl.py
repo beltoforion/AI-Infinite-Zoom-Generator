@@ -158,7 +158,12 @@ class InfiniZoom:
     def __auto_sort(self):
         print(f'Determining image order')
 
-        detector = TemplateDetector(threshold=0.01, max_num=1, method = cv2.TM_CCOEFF_NORMED)
+        # ibg 2023-08-19: #1 
+        # changed method to TM_CCOEFF_NORMED from TM_CCORR_NORMED because the latter
+        # one failed with some images. Well it did not really fail but if found a 
+        # false match to the first image in the series with a score of 0.92 (all other
+        # matches had a clean 1.0). 
+        detector = TemplateDetector(threshold=0.01, max_num=1, method = cv2.TM_CCORR_NORMED)
 
         num = len(self.__image_list)
         scores = np.zeros((num, num))
@@ -328,7 +333,7 @@ class InfiniZoom:
         if num_unlinked == 0:
             print(f' - Warning: Cannot identify the first frame! This means that any image in the sequence is a good match as a follow-up image to another image in the same series.')
 
-        if num_unlinked>1:
+        if num_unlinked > 1:
             print(f' - Warning: Your series contains {num_unlinked-1} images that cannot be matched!')
 
         print('\nFinding first image:')
@@ -346,7 +351,7 @@ class InfiniZoom:
             raise Exception("Aborting: Could not find start image!")
 
         if len(start_candidates)>1:
-            raise Exception(f'Aborting: Clean up image series! Found {len(start_candidates)} different images that could be the starting image!')
+            raise Exception(f'Check the Zoom factor! If you are sure the zoom factor is correct clean up image series! I found {len(start_candidates)} different images that could be the starting image. This can happen if the zoom factor is off or if the series contains multiple images for the same zoom step.')
 
         # finally build sorted image list
         sequence_order = self.__assemble_image_sequence(idx, filtered)
