@@ -12,21 +12,22 @@
             "console": "integratedTerminal",
             "justMyCode": true,
             "args": [
-                "-zf", "2.0", 
+                "-zf", "2", 
                 "-zs", "100", 
                 "-zc", "0.8",
                 "-d", "1.0",
 //                "-i", "input/sample_1.33x",
 //                "-i", "./input/sample_fairytale",                
-//                "-i", "./input/sample_nostradamus",
-                "-i", "./input/sample_dark",
+//                "-i", "./input/sample_dark",                
+                "-i", "./input/sample_nostradamus",
+//                "-i", "./input/lexica",
 //                "-i", "./input/sample_pirate",
 //                "-i", "./input/sample2a",
 //                "-i", "./input/sample_ps2",
                 "-as", 
-                "-rev",                 
+//                "-rev",                 
 //                "-dbg",
-                "-o", "output_frames/"]
+//                "-o", "output_frames/"]
 //                "-o", "myoutput.mp4"]
         }
     ]

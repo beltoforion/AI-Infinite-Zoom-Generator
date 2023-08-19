@@ -158,7 +158,7 @@ class InfiniZoom:
     def __auto_sort(self):
         print(f'Determining image order')
 
-        detector = TemplateDetector(threshold=0.01, max_num=1)
+        detector = TemplateDetector(threshold=0.01, max_num=1, method = cv2.TM_CCOEFF_NORMED)
 
         num = len(self.__image_list)
         scores = np.zeros((num, num))
@@ -191,7 +191,7 @@ class InfiniZoom:
                 result, result_img = detector.search(img1)
 
                 if len(result)==0:
-                    print(f'Correlating image {i} with image {j}: images are uncorrelated.')
+                    print(f'Correlating image {i} with image {j}: Cannot find any related image. The series zoom factor is incorrect or you have unrealted images in the input folder!')
                     continue
                 else:                    
                     bx, by, bw, bh, score = result[0, :5]
@@ -232,11 +232,13 @@ class InfiniZoom:
                     if debug_frames!=None:
                         debug_frames.append(overview_image.copy())
 
-                    cv2.imshow("Finding image order", overview_image)
+                    cv2.imshow("Finding image order", self.__downscale_to_screen(overview_image, 1920, 1080))
                     cv2.waitKey(10)
 
                 scores[i, j] = score
             
+            cv2.waitKey()
+
             if debug_frames!=None:
                 time.sleep(1)
 
@@ -255,6 +257,44 @@ class InfiniZoom:
                 self.__video_writer.write(frame)
 
             self.__video_writer.release()
+
+
+    def __downscale_to_screen(self, img, screen_width, screen_height):
+        """
+        Downscale an image so that it fits the screen dimensions while maintaining its aspect ratio.
+        
+        Args:
+        - img (numpy.ndarray): The input image.
+        - screen_width (int): The width of the screen.
+        - screen_height (int): The height of the screen.
+        
+        Returns:
+        - numpy.ndarray: The downscaled image.
+        """
+        # Obtain the width and height of the image
+        img_height, img_width = img.shape[:2]
+        
+        # Determine the aspect ratio of the image
+        aspect_ratio = img_width / img_height
+        
+        # Calculate the dimensions if we were to fit by width
+        new_width_by_w = screen_width
+        new_height_by_w = int(screen_width / aspect_ratio)
+        
+        # Calculate the dimensions if we were to fit by height
+        new_width_by_h = int(screen_height * aspect_ratio)
+        new_height_by_h = screen_height
+        
+        # Choose the dimensions that fit within the screen
+        if new_width_by_w <= screen_width and new_height_by_w <= screen_height:
+            new_width, new_height = new_width_by_w, new_height_by_w
+        else:
+            new_width, new_height = new_width_by_h, new_height_by_h
+
+        # Resize the image
+        resized_img = cv2.resize(img, (new_width, new_height))
+        
+        return resized_img
 
 
     def __filter_array(self, arr):
@@ -284,7 +324,10 @@ class InfiniZoom:
 
         # Now eliminate all unlinked images and find the first one:
         num_unlinked = len(unlinked_images)
-        print(f' - found {num_unlinked} unlinked images.')
+#        print(f' - found {num_unlinked} unlinked images.')
+        if num_unlinked == 0:
+            print(f' - Warning: Cannot identify the first frame! This means that any image in the sequence is a good match as a follow-up image to another image in the same series.')
+
         if num_unlinked>1:
             print(f' - Warning: Your series contains {num_unlinked-1} images that cannot be matched!')
 
