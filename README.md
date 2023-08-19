@@ -60,7 +60,7 @@ python3 ./infinite_zoom.py -as -i ./sample_fairytale -o myframes/
 <br/><br/>
 <b>-as</b><br/> Automatically sort input images. If you use this option you can name the images arbitrarily. The script will figure out the right order.
 <br/><br/>
-<b>-dbg</b><br/> Show debug overlays.
+<b>-dbg</b><br/> Show debug overlays and display debug output for each auto sort step.
 <br/><br/>
 <b>-rev</b><br/> Reverse the video. This will create a zoom out effect.
 <br/><br/>
