@@ -503,7 +503,7 @@ class InfiniZoom:
                 if len(result)==0:
                     raise Exception("Cannot match image to precursor!")
 
-                # this is the "true" position that the inner image must 
+                  # this is the "true" position that the inner image must 
                 # have to match perfectly onto the outter. Theoretically 
                 # it should always be centered to the outter image but 
                 # midjourney takes some liberties here and there may be 
@@ -519,11 +519,10 @@ class InfiniZoom:
                 ma_x = int(cx - bx)
                 ma_y = int(cy - by)
 
-
                 # Plausibility check. If the misalignment is too large something is wrong. 
                 # Usually the images are not in sequence or a zoom step is missing.
                 if abs(ma_x) > 50 or abs(ma_y) > 70:
-                    raise Exception('Image misalignment found! The images may not be in order, try using the "-as" option!')
+                    raise Exception(f'Strong image misalignment found in step {i} (delta_x={ma_x}, delta_y={ma_y})! The images may not be in order, or the zoom factor is incorrect. Try using the "-as" option!')
 
                 # How much do we need to compensate for each step?
                 ma_comp_x = ma_x / zoom_steps

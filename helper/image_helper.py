@@ -72,7 +72,7 @@ def read_image(file : str, processor : Union[ProcessorBase, list] = None):
 
 
 def read_images_folder(path : pathlib.Path):
-    pathlist = path.glob('**/*.*')
+    pathlist = sorted(path.glob('**/*.*'))
 
     images = []
 

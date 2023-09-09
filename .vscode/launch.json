@@ -24,11 +24,11 @@
 //                "-i", "./input/sample_pirate",
 //                "-i", "./input/sample2a",
 //                "-i", "./input/sample_ps2",
-                "-as", 
+//                "-as", 
 //                "-rev",                 
 //                "-dbg",
 //                "-o", "output_frames/"]
-//                "-o", "myoutput.mp4"]
+                "-o", "myoutput.mp4"]
         }
     ]
 }
