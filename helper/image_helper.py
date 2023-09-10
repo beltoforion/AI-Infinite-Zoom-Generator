@@ -72,12 +72,12 @@ def read_image(file : str, processor : Union[ProcessorBase, list] = None):
 
 
 def read_images_folder(path : pathlib.Path):
-    pathlist = sorted(path.glob('**/*.*'))
+    pathlist = sorted(path.glob('*.*'))
 
     images = []
 
     for path in pathlist:
-        if not path.suffix.lower() in ['.png', '.jpg']:
+        if not path.suffix.lower() in ['.png', '.jpg', '.jpeg']:
             continue
 
         img_orig, _ = read_image(str(path), None)
@@ -87,7 +87,7 @@ def read_images_folder(path : pathlib.Path):
     if len(images)>0:
         first_image_shape = images[0].shape
         if not all(image.shape == first_image_shape for image in images):
-            raise Exception("read_images_folder: inconsistent image sizes")
+            raise Exception(f"Reading images failed because not all images in the folder have equal size! Expected image size is {first_image_shape[:2]}.")
 
     return np.array(images)
 

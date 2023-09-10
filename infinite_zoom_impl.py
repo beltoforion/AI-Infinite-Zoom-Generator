@@ -4,6 +4,7 @@ from detectors.template_detector import *
 
 import helper.image_helper as ih
 import cv2
+import screeninfo
 import math
 import time
 
@@ -133,6 +134,11 @@ class InfiniZoom:
         self.__fontThickness = 1
         self.__fontLineType  = 1
 
+        # get screen resolution
+        screen = screeninfo.get_monitors()[0]
+        self.__screen_width = screen.width
+        self.__screen_height = screen.height
+
 
     def __load_images(self):
         if not self.__param.input_path.exists():
@@ -163,7 +169,7 @@ class InfiniZoom:
         # one failed with some images. Well it did not really fail but if found a 
         # false match to the first image in the series with a score of 0.92 (all other
         # matches had a clean 1.0). 
-        detector = TemplateDetector(threshold=0.01, max_num=1, method = cv2.TM_CCORR_NORMED)
+        detector = TemplateDetector(threshold=0.01, max_num=1, method = cv2.TM_CCOEFF_NORMED)
 
         num = len(self.__image_list)
         scores = np.zeros((num, num))
@@ -452,6 +458,33 @@ class InfiniZoom:
         self.__video_writer.release()
 
 
+    def __show_error_images(self, img_curr, img_next, text):
+        combined_image = cv2.hconcat([img_curr, img_next])
+
+        h, w = combined_image.shape[:2]
+        scale_factor = min(self.__screen_width / w, self.__screen_height / h)
+        scale_factor = min(1, scale_factor)
+
+        new_width = int(combined_image.shape[1] * scale_factor)
+        new_height = int(combined_image.shape[0] * scale_factor)
+        combined_image = cv2.resize(combined_image, (new_width, new_height))
+
+   
+        for i, line in enumerate(text.split('\n')):
+            cv2.putText(
+                combined_image, 
+                line, 
+                (20, 20 + i*20), 
+                self.__font, 
+                self.__fontScale,
+                (0,255,0), 
+                self.__fontThickness, 
+                self.__fontLineType)
+
+        cv2.imshow("Image misalignment error", combined_image)
+        cv2.waitKey(0)
+
+
     def zoom_in(self, imgCurr, imgNext, video_w, video_h):
         zoom_steps = self.__param.zoom_steps
 
@@ -467,6 +500,9 @@ class InfiniZoom:
         # copy images because we will modify them
         img_curr = imgCurr.copy()
         img_next = imgNext.copy()
+
+        display_scale = min(self.__screen_width / w, self.__screen_height / h)
+        display_scale = min(1, display_scale)
 
         # Do the zoom
         for i in range(0, zoom_steps):
@@ -497,13 +533,16 @@ class InfiniZoom:
             if i == 0:
                 # The second image may not be perfectly centered. We need to determine 
                 # image offset to compensate
-                detector = TemplateDetector(threshold=0.3, max_num=1)
+                detector = TemplateDetector(threshold=0.3, max_num=1, method=cv2.TM_CCOEFF_NORMED)
                 detector.pattern = img_next
                 result, result_image = detector.search(img_curr)
+
                 if len(result)==0:
+                    text = f'Error: Cannot match the following two images!'
+                    self.__show_error_images(imgCurr, imgNext, text)
                     raise Exception("Cannot match image to precursor!")
 
-                  # this is the "true" position that the inner image must 
+                # this is the "true" position that the inner image must 
                 # have to match perfectly onto the outter. Theoretically 
                 # it should always be centered to the outter image but 
                 # midjourney takes some liberties here and there may be 
@@ -521,7 +560,17 @@ class InfiniZoom:
 
                 # Plausibility check. If the misalignment is too large something is wrong. 
                 # Usually the images are not in sequence or a zoom step is missing.
-                if abs(ma_x) > 50 or abs(ma_y) > 70:
+                if abs(ma_x) > w/5 or abs(ma_y) > h/5:
+                    cv2.imshow("-haystack-", img_curr)
+                    cv2.waitKey(0)
+                
+                    cv2.imshow("-needle-", img_next)
+                    cv2.waitKey(0)
+
+                    text = f'Error: Strong image misalignment found in zoom step {i} between these two images.\n' \
+                           f'The offset vector is (dx={ma_x}, dy={ma_y}) which indicated an error in the sequence.\n' \
+                           f'Images may not be in order, or contain multiple images for at least one zoom step.'
+                    self.__show_error_images(imgCurr, imgNext, text)
                     raise Exception(f'Strong image misalignment found in step {i} (delta_x={ma_x}, delta_y={ma_y})! The images may not be in order, or the zoom factor is incorrect. Try using the "-as" option!')
 
                 # How much do we need to compensate for each step?
@@ -578,7 +627,8 @@ class InfiniZoom:
 
             self.__frames.append(img_curr)
 
-            cv2.imshow("Frame generation progress...", img_curr)
+            img_display = cv2.resize(img_curr, None, fx=display_scale, fy=display_scale, interpolation=cv2.INTER_AREA)
+            cv2.imshow("Frame generation progress...", img_display)
             key = cv2.waitKey(10)
             if key == 27 or cv2.getWindowProperty("Frame generation progress...", cv2.WND_PROP_VISIBLE) < 1:
                 raise Exception("User aborted!")
