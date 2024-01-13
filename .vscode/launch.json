@@ -20,7 +20,7 @@
 //                "-i", "./input/sample_fairytale",                
 //                "-i", "./input/sample_dark",                
 //                "-i", "./input/sample_nostradamus",
-                  "-i", "./input/sample_bug",
+                  "-i", "./input/sample_nostradamus",
 //                "-i", "./input/lexica",
 //                "-i", "./input/sample_pirate",
 //                "-i", "./input/sample2a",

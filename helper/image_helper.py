@@ -1,6 +1,5 @@
 import numpy as np
 import pathlib
-import rawpy
 import cv2
 from typing import Union
 
@@ -51,12 +50,7 @@ def read_image(file : str, processor : Union[ProcessorBase, list] = None):
     """
 
     ext = pathlib.Path(file).suffix
-    if ext.lower()=='.cr2':
-        image : np.array = rawpy.imread(file).postprocess(output_bps=16) 
-        image = np.float32(image) # image.astype(np.float32)
-        image = image / 65535.0
-    else:
-        image : np.array = cv2.imread(file)
+    image : np.array = cv2.imread(file)
 
     original_image = image.copy()
 
