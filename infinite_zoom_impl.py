@@ -135,9 +135,13 @@ class InfiniZoom:
         self.__fontLineType  = 1
 
         # get screen resolution
-        screen = screeninfo.get_monitors()[0]
-        self.__screen_width = screen.width
-        self.__screen_height = screen.height
+        try:
+            screen = screeninfo.get_monitors()[0]
+            self.__screen_width = screen.width
+            self.__screen_height = screen.height
+        except:
+            self.__screen_width = 1024
+            self.__screen_height = 768
 
 
     def __load_images(self):
