@@ -135,28 +135,10 @@ class InfiniZoom:
         self.__fontLineType  = 1
 
         # get screen resolution
-        try:
-            screen = screeninfo.get_monitors()[0]
-            self.__screen_width = screen.width
-            self.__screen_height = screen.height
-        except:
-            self.__screen_width = 1024
-            self.__screen_height = 768
+        screen = screeninfo.get_monitors()[0]
+        self.__screen_width = screen.width
+        self.__screen_height = screen.height
 
-        try:
-            import google.colab
-            self.__is_notebook = True
-        except:
-            self.__is_notebook = False
-
-
-    def __show_image(self, title : str, image : np.ndarray) -> None:
-        if self.__is_notebook:
-            from google.colab.patches import cv2_imshow
-            from PIL import Image
-            cv2_imshow(image)
-        else:
-            cv2.imshow(title, image)
 
     def __load_images(self):
         if not self.__param.input_path.exists():
@@ -261,7 +243,7 @@ class InfiniZoom:
                     if debug_frames!=None:
                         debug_frames.append(overview_image.copy())
 
-                    self.__show_image("Finding image order", self.__downscale_to_screen(overview_image, 1920, 1080))
+                    cv2.imshow("Finding image order", self.__downscale_to_screen(overview_image, 1920, 1080))
                     cv2.waitKey(10)
 
                 scores[i, j] = score
@@ -499,7 +481,7 @@ class InfiniZoom:
                 self.__fontThickness, 
                 self.__fontLineType)
 
-        self.__show_image("Image misalignment error", combined_image)
+        cv2.imshow("Image misalignment error", combined_image)
         cv2.waitKey(0)
 
 
@@ -579,10 +561,10 @@ class InfiniZoom:
                 # Plausibility check. If the misalignment is too large something is wrong. 
                 # Usually the images are not in sequence or a zoom step is missing.
                 if abs(ma_x) > w/5 or abs(ma_y) > h/5:
-                    self.__show_image("-haystack-", img_curr)
+                    cv2.imshow("-haystack-", img_curr)
                     cv2.waitKey(0)
                 
-                    self.__show_image("-needle-", img_next)
+                    cv2.imshow("-needle-", img_next)
                     cv2.waitKey(0)
 
                     text = f'Error: Strong image misalignment found in zoom step {i} between these two images.\n' \
@@ -646,9 +628,9 @@ class InfiniZoom:
             self.__frames.append(img_curr)
 
             img_display = cv2.resize(img_curr, None, fx=display_scale, fy=display_scale, interpolation=cv2.INTER_AREA)
-            self.__show_image("Frame generation progress...", img_display)
+            cv2.imshow("Frame generation progress...", img_display)
             key = cv2.waitKey(10)
-            if not self.__is_notebook and (key == 27 or cv2.getWindowProperty("Frame generation progress...", cv2.WND_PROP_VISIBLE) < 1):
+            if key == 27 or cv2.getWindowProperty("Frame generation progress...", cv2.WND_PROP_VISIBLE) < 1:
                 raise Exception("User aborted!")
 
         print()
