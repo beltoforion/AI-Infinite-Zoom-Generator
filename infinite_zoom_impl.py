@@ -648,7 +648,7 @@ class InfiniZoom:
             img_display = cv2.resize(img_curr, None, fx=display_scale, fy=display_scale, interpolation=cv2.INTER_AREA)
             self.__show_image("Frame generation progress...", img_display)
             key = cv2.waitKey(10)
-            if key == 27 or cv2.getWindowProperty("Frame generation progress...", cv2.WND_PROP_VISIBLE) < 1:
+            if not self.__is_notebook and (key == 27 or cv2.getWindowProperty("Frame generation progress...", cv2.WND_PROP_VISIBLE) < 1):
                 raise Exception("User aborted!")
 
         print()
