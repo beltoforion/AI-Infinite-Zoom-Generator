@@ -153,6 +153,7 @@ class InfiniZoom:
     def __show_image(self, title : str, image : np.ndarray) -> None:
         if self.__is_notebook:
             from google.colab.patches import cv2_imshow
+            from PIL import Image
             cv2_imshow(image)
         else:
             cv2.imshow(title, image)
