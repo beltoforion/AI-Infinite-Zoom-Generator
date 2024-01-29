@@ -145,7 +145,6 @@ class InfiniZoom:
 
         try:
             import google.colab
-            from google.colab.patches import cv2_imshow
             self.__is_notebook = True
         except:
             self.__is_notebook = False
@@ -153,6 +152,7 @@ class InfiniZoom:
 
     def __show_image(self, title : str, image : np.ndarray) -> None:
         if self.__is_notebook:
+            from google.colab.patches import cv2_imshow
             cv2_imshow(image)
         else:
             cv2.imshow(title, image)
