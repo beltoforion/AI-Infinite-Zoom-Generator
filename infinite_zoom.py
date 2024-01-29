@@ -77,7 +77,8 @@ def main():
     iz.process()
 
 if __name__ == "__main__":
-    try:
-        main()
-    except Exception as ex:
-        print(f'\nError: {ex}')
+    main()
+#    try:
+#        main()
+#    except Exception as ex:
+#        print(f'\nError: {ex}')
